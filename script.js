@@ -107,6 +107,9 @@ const state = {
 
 const apiBase = window.location.protocol === "file:" ? "http://127.0.0.1:4180" : "";
 const apiEnabled = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
+const liveConfig = window.VASTRAVATHI_LIVE_CONFIG || {};
+const supabaseEnabled = Boolean(liveConfig.supabaseUrl && liveConfig.supabaseAnonKey);
+const productsTable = liveConfig.productsTable || "products";
 
 const rupees = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -130,6 +133,35 @@ const searchInput = document.querySelector("[data-search-input]");
 const searchResults = document.querySelector("[data-search-results]");
 const paymentNote = document.querySelector("[data-payment-note]");
 const submitOrder = document.querySelector("[data-submit-order]");
+
+async function supabaseRequest(path, options = {}) {
+  const baseUrl = String(liveConfig.supabaseUrl || "").replace(/\/$/, "");
+  const response = await fetch(`${baseUrl}/rest/v1/${path}`, {
+    ...options,
+    headers: {
+      apikey: liveConfig.supabaseAnonKey,
+      Authorization: `Bearer ${liveConfig.supabaseAnonKey}`,
+      "Content-Type": "application/json",
+      Prefer: "return=representation",
+      ...(options.headers || {})
+    }
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(body || "Live products could not be loaded");
+  }
+
+  if (response.status === 204) return null;
+  return response.json();
+}
+
+async function loadLiveProducts() {
+  const rows = await supabaseRequest(`${productsTable}?select=id,payload,updated_at&order=updated_at.desc`);
+  return rows
+    .map((row) => row.payload || row)
+    .filter((product) => product && product.id && product.name);
+}
 
 function visibleProducts() {
   const filtered = state.filter === "all"
@@ -253,7 +285,7 @@ function renderWishlist() {
       <img src="${mainImage(item)}" alt="${item.name}" />
       <div>
         <h4>${item.name}</h4>
-        <span>${rupees.format(item.price)} · ${stockLabel(item)}</span>
+        <span>${rupees.format(item.price)} ï¿½ ${stockLabel(item)}</span>
       </div>
       <button class="icon-btn" type="button" data-add="${item.id}" aria-label="Add ${item.name} to cart" ${isInStock(item) ? "" : "disabled"}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h15l-1.5 9h-12z"></path><path d="M6 6 5 3H2"></path></svg>
@@ -506,7 +538,7 @@ function renderSearch(query = "") {
       <img src="${mainImage(product)}" alt="${product.name}" />
       <div>
         <strong>${product.name}</strong>
-        <div>${rupees.format(product.price)} · ${stockLabel(product)}</div>
+        <div>${rupees.format(product.price)} ï¿½ ${stockLabel(product)}</div>
       </div>
       <button class="primary-btn" type="button" data-add="${product.id}" ${isInStock(product) ? "" : "disabled"}>${isInStock(product) ? "Add" : "Sold Out"}</button>
     </div>
@@ -632,10 +664,17 @@ document.querySelectorAll(".reveal").forEach((item) => revealObserver.observe(it
 
 async function initStorefront() {
   try {
-    const productUrl = apiEnabled ? `${apiBase}/api/products?ts=${Date.now()}` : `data/products.json?ts=${Date.now()}`;
-    const response = await fetch(productUrl, { cache: "no-store" });
-    if (response.ok) {
-      products = await response.json();
+    if (supabaseEnabled) {
+      const liveProducts = await loadLiveProducts();
+      if (liveProducts.length) {
+        products = liveProducts;
+      }
+    } else {
+      const productUrl = apiEnabled ? `${apiBase}/api/products?ts=${Date.now()}` : `data/products.json?ts=${Date.now()}`;
+      const response = await fetch(productUrl, { cache: "no-store" });
+      if (response.ok) {
+        products = await response.json();
+      }
     }
   } catch {
     showToast("Using saved products");

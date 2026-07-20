@@ -13,6 +13,10 @@ const uploadPreview = document.querySelector("[data-upload-preview]");
 
 let products = [];
 let orders = [];
+const liveConfig = window.VASTRAVATHI_LIVE_CONFIG || {};
+const supabaseEnabled = Boolean(liveConfig.supabaseUrl && liveConfig.supabaseAnonKey);
+const cloudinaryEnabled = Boolean(liveConfig.cloudinaryCloudName && liveConfig.cloudinaryUploadPreset);
+const productsTable = liveConfig.productsTable || "products";
 
 function showToast(message) {
   toast.textContent = message;
@@ -37,7 +41,87 @@ async function api(path, options = {}) {
   return response.json();
 }
 
+async function supabaseRequest(path, options = {}) {
+  const baseUrl = String(liveConfig.supabaseUrl || "").replace(/\/$/, "");
+  const response = await fetch(`${baseUrl}/rest/v1/${path}`, {
+    ...options,
+    headers: {
+      apikey: liveConfig.supabaseAnonKey,
+      Authorization: `Bearer ${liveConfig.supabaseAnonKey}`,
+      "Content-Type": "application/json",
+      Prefer: "return=representation",
+      ...(options.headers || {})
+    }
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(body || "Live request failed");
+  }
+
+  if (response.status === 204) return null;
+  return response.json();
+}
+
+function productId() {
+  return `saree_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+async function loadProducts() {
+  if (!supabaseEnabled) return api("/api/products");
+  const rows = await supabaseRequest(`${productsTable}?select=id,payload,updated_at&order=updated_at.desc`);
+  return rows.map((row) => row.payload || row).filter((product) => product && product.id);
+}
+
+async function saveProduct(data) {
+  if (!supabaseEnabled) {
+    const id = data.id;
+    const method = id ? "PUT" : "POST";
+    const path = id ? `/api/products/${id}` : "/api/products";
+    if (!id) delete data.id;
+    return api(path, { method, body: JSON.stringify(data) });
+  }
+
+  const id = data.id || productId();
+  data.id = id;
+  return supabaseRequest(productsTable, {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=representation" },
+    body: JSON.stringify({ id, payload: data, updated_at: new Date().toISOString() })
+  });
+}
+
+async function deleteProduct(id) {
+  if (!supabaseEnabled) return api(`/api/products/${id}`, { method: "DELETE" });
+  return supabaseRequest(`${productsTable}?id=eq.${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+async function loadOrders() {
+  if (supabaseEnabled) return [];
+  return api("/api/orders");
+}
+
 async function uploadPhoto(file) {
+  if (cloudinaryEnabled) {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", liveConfig.cloudinaryUploadPreset);
+    formData.append("folder", "vastravathi/products");
+
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${liveConfig.cloudinaryCloudName}/image/upload`, {
+      method: "POST",
+      body: formData
+    });
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(body.error?.message || "Cloudinary upload failed");
+    }
+
+    const body = await response.json();
+    return { url: body.secure_url };
+  }
+
   const response = await fetch("/api/uploads", {
     method: "POST",
     headers: { "Content-Type": file.type || "image/jpeg" },
@@ -207,8 +291,8 @@ photoUpload.addEventListener("change", async (event) => {
 
 async function loadAll() {
   [products, orders] = await Promise.all([
-    api("/api/products"),
-    api("/api/orders")
+    loadProducts(),
+    loadOrders()
   ]);
   renderProducts();
   renderOrders();
@@ -229,12 +313,7 @@ productForm.addEventListener("submit", async (event) => {
   data.compare = Number(data.compare || 0);
   data.stock = Number(data.stock || 0);
 
-  const id = data.id;
-  const method = id ? "PUT" : "POST";
-  const path = id ? `/api/products/${id}` : "/api/products";
-  if (!id) delete data.id;
-
-  await api(path, { method, body: JSON.stringify(data) });
+  await saveProduct(data);
   clearProductForm();
   await loadAll();
   showToast("Product saved");
@@ -253,7 +332,7 @@ document.addEventListener("click", async (event) => {
   }
 
   if (deleteId) {
-    await api(`/api/products/${deleteId}`, { method: "DELETE" });
+    await deleteProduct(deleteId);
     await loadAll();
     showToast("Product deleted");
   }
@@ -303,9 +382,13 @@ document.addEventListener("change", async (event) => {
   showToast("Order updated");
 });
 
-api("/api/admin/me")
-  .then((session) => {
-    if (!session.loggedIn) window.location.href = "/admin-login.html";
-    return loadAll();
-  })
-  .catch((error) => showToast(error.message));
+if (supabaseEnabled) {
+  loadAll().catch((error) => showToast(error.message));
+} else {
+  api("/api/admin/me")
+    .then((session) => {
+      if (!session.loggedIn) window.location.href = "/admin-login.html";
+      return loadAll();
+    })
+    .catch((error) => showToast(error.message));
+}

@@ -28,6 +28,7 @@ async function main() {
     "index.html",
     "styles.css",
     "script.js",
+    "live-config.js",
     "vastravathi-logo.svg",
     "shipping.html",
     "returns.html",
