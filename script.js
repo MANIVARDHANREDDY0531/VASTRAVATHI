@@ -113,7 +113,7 @@ const state = {
 };
 
 const apiBase = window.location.protocol === "file:" ? "http://127.0.0.1:4180" : "";
-const apiEnabled = true;
+const apiEnabled = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
 
 const rupees = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -638,15 +638,14 @@ const revealObserver = new IntersectionObserver((entries) => {
 document.querySelectorAll(".reveal").forEach((item) => revealObserver.observe(item));
 
 async function initStorefront() {
-  if (apiEnabled) {
-    try {
-      const response = await fetch(`${apiBase}/api/products?ts=${Date.now()}`, { cache: "no-store" });
-      if (response.ok) {
-        products = await response.json();
-      }
-    } catch {
-      showToast("Using demo products");
+  try {
+    const productUrl = apiEnabled ? `${apiBase}/api/products?ts=${Date.now()}` : `data/products.json?ts=${Date.now()}`;
+    const response = await fetch(productUrl, { cache: "no-store" });
+    if (response.ok) {
+      products = await response.json();
     }
+  } catch {
+    showToast("Using saved products");
   }
 
   renderProducts();

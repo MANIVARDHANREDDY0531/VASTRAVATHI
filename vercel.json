@@ -1,28 +1,7 @@
 {
   "version": 2,
-  "rewrites": [
-    {
-      "source": "/api/products",
-      "destination": "/api/products.js"
-    },
-    {
-      "source": "/api/orders",
-      "destination": "/api/orders.js"
-    },
-    {
-      "source": "/api/health",
-      "destination": "/api/health.js"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
-        }
-      ]
-    }
-  ]
+  "buildCommand": "npm run build",
+  "outputDirectory": ".",
+  "cleanUrls": true,
+  "trailingSlash": false
 }
