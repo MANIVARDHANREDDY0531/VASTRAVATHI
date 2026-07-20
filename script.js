@@ -1,109 +1,102 @@
-ï»¿let products = [
+let products = [
   {
-    id: "kanjivaram-rose",
-    name: "Rose Gold Kanjivaram Silk Saree",
-    category: "silk",
-    occasion: "Wedding",
-    price: 6490,
-    compare: 7290,
-    badge: "Best Seller",
-    image: "https://images.unsplash.com/photo-1583391733956-6c78276477e2?auto=format&fit=crop&w=900&q=80",
-    details: "A luminous silk saree with zari border, soft drape, and matching blouse piece for wedding functions.",
-    fabric: "Pure silk blend",
-    color: "Rose gold"
+    "id": "saree_mrrvow43_wfhk39",
+    "name": "Rani Pink & Mehendi Green Kanchi Pattu Saree",
+    "category": "wedding",
+    "occasion": "Wedding, Festive, Party, Traditional Ceremony",
+    "price": 4500,
+    "compare": 7699,
+    "badge": "Bestseller",
+    "image": "/uploads/saree_photo_mrrvk3ln_p89vr0.jpg",
+    "images": [
+      "/uploads/saree_photo_mrrvk3ln_p89vr0.jpg",
+      "/uploads/saree_photo_mrrvk3m5_98s45d.jpg",
+      "/uploads/saree_photo_mrrvk3mm_9w9m3u.jpg",
+      "/uploads/saree_photo_mrrvk3n3_6pa4pw.jpg",
+      "/uploads/saree_photo_mrrvk3nn_7unq8s.jpg",
+      "/uploads/saree_photo_mrrvk3o7_h7t4o3.jpg",
+      "/uploads/saree_photo_mrrvk3ov_weyviw.jpg",
+      "/uploads/saree_photo_mrrvk3ph_pao2sc.jpg"
+    ],
+    "details": "Elegant mehendi-green and rani-pink silk-blend saree featuring intricate golden floral zari weaving and a richly designed pink border and pallu. An excellent choice for weddings, festivals, parties, and traditional celebrations.\n\nPackage includes: 1 saree with matching unstitched blouse piece.",
+    "fabric": "Woven Silk Blend with Zari Work (kanchi pattu)",
+    "color": "Mehendi Green and Rani Pink",
+    "stock": 15
   },
   {
-    id: "cotton-indigo",
-    name: "Indigo Handloom Cotton Saree",
-    category: "cotton",
-    occasion: "Everyday",
-    price: 2490,
-    compare: 2990,
-    badge: "New",
-    image: "https://images.unsplash.com/photo-1603217041431-9a99375be8d8?auto=format&fit=crop&w=900&q=80",
-    details: "Breathable cotton with a graceful border, made for office days, temple visits, and easy festive styling.",
-    fabric: "Handloom cotton",
-    color: "Indigo"
+    "id": "saree_mrrw4815_hl917h",
+    "name": "Golden Mustard & Rani Pink Kanchi Pattu Saree",
+    "category": "wedding",
+    "occasion": "Wedding, Festival, Party and Traditional Ceremony",
+    "price": 4499,
+    "compare": 7699,
+    "badge": "Festive Special",
+    "image": "/uploads/saree_photo_mrrvz7fq_9m05ew.jpg",
+    "images": [
+      "/uploads/saree_photo_mrrvz7fq_9m05ew.jpg",
+      "/uploads/saree_photo_mrrvz7gl_wpprx4.jpg",
+      "/uploads/saree_photo_mrrvz7ha_wrqcpa.jpg",
+      "/uploads/saree_photo_mrrvz7i0_6x3wyt.jpg",
+      "/uploads/saree_photo_mrrvz7ip_2z3q46.jpg",
+      "/uploads/saree_photo_mrrvz7jj_gfvk0x.jpg",
+      "/uploads/saree_photo_mrrvz7kf_xg3i67.jpg",
+      "/uploads/saree_photo_mrrvz7ld_9yjmo5.jpg"
+    ],
+    "details": "Add a vibrant traditional touch to your wardrobe with this golden mustard-yellow and rani-pink woven silk saree. It features intricate golden floral zari work, a contrasting pink border and an elaborately woven pink pallu. Ideal for weddings, festivals, parties and traditional celebrations.\n\nPackage includes: 1 saree with matching unstitched blouse piece.",
+    "fabric": "Woven Silk Blend with Golden Zari Floral Work (kanchi pattu)",
+    "color": "Golden Mustard Yellow and Rani Pink",
+    "stock": 10
   },
   {
-    id: "wedding-maroon",
-    name: "Maroon Bridal Zari Saree",
-    category: "wedding",
-    occasion: "Wedding",
-    price: 9990,
-    compare: 11990,
-    badge: "Festive",
-    image: "https://images.unsplash.com/photo-1601482438629-346a273776af?auto=format&fit=crop&w=900&q=80",
-    details: "A rich maroon saree with statement border work, styled for reception, engagement, and family ceremonies.",
-    fabric: "Silk zari",
-    color: "Maroon"
+    "id": "saree_mrrwekqt_s0bi90",
+    "name": "Rust Orange & Emerald Green Kanchi Pattu Saree",
+    "category": "silk",
+    "occasion": "Wedding, Festive, Party, Traditional Ceremony",
+    "price": 4500,
+    "compare": 7699,
+    "badge": "Bestseller",
+    "image": "/uploads/saree_photo_mrrwd7ao_owhbx5.jpg",
+    "images": [
+      "/uploads/saree_photo_mrrwd7ao_owhbx5.jpg",
+      "/uploads/saree_photo_mrrwd7b1_s7csz7.jpg",
+      "/uploads/saree_photo_mrrwd7bb_qxl587.jpg",
+      "/uploads/saree_photo_mrrwd7bm_vzlb13.jpg",
+      "/uploads/saree_photo_mrrwd7c3_k76nb7.jpg",
+      "/uploads/saree_photo_mrrwd7ck_gvjw3c.jpg",
+      "/uploads/saree_photo_mrrwd7d4_stj1mr.jpg",
+      "/uploads/saree_photo_mrrwd7do_rw66ik.jpg"
+    ],
+    "details": "Make an elegant traditional statement with this rust-orange and emerald-green woven silk saree. The saree features elaborate golden zari motifs throughout the body, a contrasting green border and a richly woven pallu decorated with peacock and floral patterns. Perfect for weddings, festivals, parties and traditional celebrations.\n\nPackage includes: 1 saree with matching unstitched blouse piece.",
+    "fabric": "Woven Silk Blend with Zari Work (kanchi pattu)",
+    "color": "Rust Orange and Emerald Green",
+    "stock": 10
   },
   {
-    id: "organza-mint",
-    name: "Mint Floral Organza Saree",
-    category: "organza",
-    occasion: "Party",
-    price: 3990,
-    compare: 4590,
-    badge: "Lightweight",
-    image: "https://images.unsplash.com/photo-1617059322009-17e0fd287b8a?auto=format&fit=crop&w=900&q=80",
-    details: "A feather-light organza drape with soft floral detail, ideal for brunches and evening celebrations.",
-    fabric: "Organza",
-    color: "Mint"
-  },
-  {
-    id: "silk-teal",
-    name: "Teal Temple Border Silk Saree",
-    category: "silk",
-    occasion: "Festive",
-    price: 5790,
-    compare: 6490,
-    badge: "Premium",
-    image: "https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?auto=format&fit=crop&w=900&q=80",
-    details: "Traditional temple border detailing with a jewel-tone finish and elegant fall.",
-    fabric: "Art silk",
-    color: "Teal"
-  },
-  {
-    id: "cotton-rust",
-    name: "Rust Linen Cotton Saree",
-    category: "cotton",
-    occasion: "Office",
-    price: 2890,
-    compare: 3290,
-    badge: "Comfort",
-    image: "https://images.unsplash.com/photo-1610189020464-076e0b110c8e?auto=format&fit=crop&w=900&q=80",
-    details: "A crisp linen-cotton saree with quiet texture and an easy drape for repeat wear.",
-    fabric: "Linen cotton",
-    color: "Rust"
-  },
-  {
-    id: "wedding-gold",
-    name: "Gold Tissue Celebration Saree",
-    category: "wedding",
-    occasion: "Reception",
-    price: 8490,
-    compare: 9490,
-    badge: "Limited",
-    image: "https://images.unsplash.com/photo-1600703136783-bdb5ea365239?auto=format&fit=crop&w=900&q=80",
-    details: "A refined tissue saree with gold sheen, created for evening functions and grand gifting.",
-    fabric: "Tissue silk",
-    color: "Gold"
-  },
-  {
-    id: "organza-blush",
-    name: "Blush Embroidered Organza Saree",
-    category: "organza",
-    occasion: "Party",
-    price: 4290,
-    compare: 4990,
-    badge: "Trending",
-    image: "https://images.unsplash.com/photo-1597983073493-88cd35cf93b0?auto=format&fit=crop&w=900&q=80",
-    details: "Soft blush organza with embroidered accents and a polished blouse piece.",
-    fabric: "Organza silk",
-    color: "Blush"
+    "id": "saree_mrrwls9a_y6ltvq",
+    "name": "Turquoise Teal & Royal Purple Woven Kanchi Pattu Saree",
+    "category": "wedding",
+    "occasion": "Wedding, Festive, Party, Traditional Ceremony",
+    "price": 4500,
+    "compare": 7699,
+    "badge": "Bestseller",
+    "image": "/uploads/saree_photo_mrrwhnsk_5ihgtr.jpg",
+    "images": [
+      "/uploads/saree_photo_mrrwhnsk_5ihgtr.jpg",
+      "/uploads/saree_photo_mrrwhnsy_773g1e.jpg",
+      "/uploads/saree_photo_mrrwhntb_f38prs.jpg",
+      "/uploads/saree_photo_mrrwhntz_vvl8lz.jpg",
+      "/uploads/saree_photo_mrrwhnui_wiwe82.jpg",
+      "/uploads/saree_photo_mrrwhnv2_a1om4v.jpg",
+      "/uploads/saree_photo_mrrwhnvj_es30x3.jpg",
+      "/uploads/saree_photo_mrrwhnvy_rf9vb8.jpg"
+    ],
+    "details": "Bring timeless elegance to special occasions with this turquoise-teal and royal-purple woven silk saree. It features intricate golden zari motifs across the body, a contrasting purple border and an ornate pallu decorated with traditional peacock and floral designs. Ideal for weddings, festivals, parties and cultural celebrations.\n\nPackage includes: 1 saree with matching unstitched blouse piece.",
+    "fabric": "Woven Silk Blend with Zari Work (kanchi pattu)",
+    "color": "Turquoise Teal and Royal Purple",
+    "stock": 10
   }
-];
+]
+;
 
 const state = {
   filter: "all",
@@ -260,7 +253,7 @@ function renderWishlist() {
       <img src="${mainImage(item)}" alt="${item.name}" />
       <div>
         <h4>${item.name}</h4>
-        <span>${rupees.format(item.price)} Â· ${stockLabel(item)}</span>
+        <span>${rupees.format(item.price)} · ${stockLabel(item)}</span>
       </div>
       <button class="icon-btn" type="button" data-add="${item.id}" aria-label="Add ${item.name} to cart" ${isInStock(item) ? "" : "disabled"}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h15l-1.5 9h-12z"></path><path d="M6 6 5 3H2"></path></svg>
@@ -513,7 +506,7 @@ function renderSearch(query = "") {
       <img src="${mainImage(product)}" alt="${product.name}" />
       <div>
         <strong>${product.name}</strong>
-        <div>${rupees.format(product.price)} Â· ${stockLabel(product)}</div>
+        <div>${rupees.format(product.price)} · ${stockLabel(product)}</div>
       </div>
       <button class="primary-btn" type="button" data-add="${product.id}" ${isInStock(product) ? "" : "disabled"}>${isInStock(product) ? "Add" : "Sold Out"}</button>
     </div>
