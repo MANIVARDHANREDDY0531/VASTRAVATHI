@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vastravathi Admin</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body class="admin-body">
+  <header class="admin-header">
+    <a class="brand" href="index.html" aria-label="Back to Vastravathi">
+      <img class="brand-logo" src="vastravathi-logo.svg" alt="Vastravathi" />
+    </a>
+    <div>
+      <p class="eyebrow">Backend dashboard</p>
+      <h1>Store admin</h1>
+    </div>
+    <div class="admin-header-actions">
+      <a class="secondary-detail-btn" href="index.html">View Website</a>
+      <button class="secondary-detail-btn" type="button" data-logout>Logout</button>
+    </div>
+  </header>
+
+  <main class="admin-main">
+    <section class="admin-stats" aria-label="Store stats">
+      <article><span>Products</span><strong data-product-total>0</strong></article>
+      <article><span>Orders</span><strong data-order-total>0</strong></article>
+      <article><span>Pending</span><strong data-pending-total>0</strong></article>
+      <article><span>Revenue</span><strong data-revenue-total>₹0</strong></article>
+    </section>
+
+    <section class="admin-panel">
+      <div class="admin-panel-heading">
+        <div>
+          <p class="eyebrow">Inventory</p>
+          <h2>Add or update sarees</h2>
+        </div>
+        <button class="secondary-detail-btn" type="button" data-reset-product>Clear Form</button>
+      </div>
+      <form class="admin-form" data-product-form>
+        <input type="hidden" name="id" />
+        <label>Name<input name="name" required /></label>
+        <label>Category
+          <select name="category">
+            <option value="silk">Silk</option>
+            <option value="cotton">Cotton</option>
+            <option value="wedding">Wedding</option>
+            <option value="organza">Organza</option>
+          </select>
+        </label>
+        <label>Occasion<input name="occasion" required /></label>
+        <label>Badge<input name="badge" required /></label>
+        <label>Price<input name="price" type="number" required /></label>
+        <label>Compare price<input name="compare" type="number" /></label>
+        <label>Fabric<input name="fabric" required /></label>
+        <label>Color<input name="color" required /></label>
+        <label>Stock<input name="stock" type="number" required /></label>
+        <label class="span-2">Upload saree photos, up to 8<input type="file" name="photoUpload" accept="image/*" data-photo-upload multiple /></label>
+        <label class="span-2">Main Image URL<input name="image" placeholder="Auto-filled after upload or paste a link" required /></label>
+        <label class="span-2">All Image URLs<textarea name="images" placeholder="Auto-filled after upload. One image URL per line."></textarea></label>
+        <div class="upload-preview span-2" data-upload-preview></div>
+        <label class="span-2">Details<textarea name="details" required></textarea></label>
+        <button class="primary-btn span-2" type="submit">Save Product</button>
+      </form>
+      <div class="admin-list" data-product-list></div>
+    </section>
+
+    <section class="admin-panel">
+      <div class="admin-panel-heading">
+        <div>
+          <p class="eyebrow">Orders</p>
+          <h2>Shiprocket-ready orders</h2>
+        </div>
+        <button class="secondary-detail-btn" type="button" data-refresh-orders>Refresh</button>
+      </div>
+      <div class="admin-list" data-order-list></div>
+    </section>
+  </main>
+
+  <div class="toast" data-toast>Saved</div>
+  <script src="admin.js"></script>
+</body>
+</html>

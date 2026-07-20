@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vastravathi Admin Login</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body class="admin-body login-body">
+  <main class="login-shell">
+    <img class="brand-logo" src="vastravathi-logo.svg" alt="Vastravathi" />
+    <form class="login-card" data-login-form>
+      <p class="eyebrow">Admin access</p>
+      <h1>Sign in to Vastravathi</h1>
+      <label>Admin ID<input type="text" name="username" autocomplete="username" required /></label>
+      <label>Password<input type="password" name="password" autocomplete="current-password" required /></label>
+      <button class="primary-btn full" type="submit">Login</button>
+      <p class="login-error" data-login-error></p>
+    </form>
+  </main>
+  <script>
+    document.querySelector("[data-login-form]").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const error = document.querySelector("[data-login-error]");
+      error.textContent = "";
+      const body = Object.fromEntries(new FormData(event.currentTarget).entries());
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      if (response.ok) {
+        window.location.href = "/admin.html";
+        return;
+      }
+      const data = await response.json().catch(() => ({}));
+      error.textContent = data.error || "Login failed.";
+    });
+  </script>
+</body>
+</html>
