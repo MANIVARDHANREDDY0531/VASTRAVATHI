@@ -511,9 +511,9 @@ async function main() {
     } catch (error) {
       sendError(res, 500, error.message || "Server error");
     }
-  }).listen(PORT, "127.0.0.1", () => {
-    console.log(`Vastravathi backend: http://127.0.0.1:${PORT}`);
-    console.log(`Admin dashboard:     http://127.0.0.1:${PORT}/admin.html`);
+  }).listen(PORT, "0.0.0.0", () => {
+    console.log(`Vastravathi backend: http://0.0.0.0:${PORT}`);
+    console.log(`Admin dashboard:     http://0.0.0.0:${PORT}/admin.html`);
   });
 }
 
