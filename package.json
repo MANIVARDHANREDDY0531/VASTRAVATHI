@@ -1,9 +1,10 @@
 {
-  "name": "vastravathi-deploy-root",
+  "name": "vastravathi",
   "version": "1.0.0",
   "private": true,
   "main": "app.js",
   "scripts": {
+    "dev": "node server.mjs",
     "build": "node build-static.cjs"
   }
 }
