@@ -9,10 +9,13 @@ const PORT = Number(process.env.PORT || 4180);
 const ADMIN_USER = process.env.ADMIN_USER || "MANIVARDHANREDDY";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "minnu9028";
 const ADMIN_SESSION = "vastravathi_admin";
-const DATA_DIR = join(__dirname, "data");
-const UPLOADS_DIR = join(__dirname, "uploads");
+const BUNDLED_DATA_DIR = join(__dirname, "data");
+const BUNDLED_UPLOADS_DIR = join(__dirname, "uploads");
+const DATA_DIR = process.env.VASTRAVATHI_DATA_DIR || BUNDLED_DATA_DIR;
+const UPLOADS_DIR = process.env.VASTRAVATHI_UPLOADS_DIR || join(DATA_DIR, "uploads");
 const PRODUCTS_FILE = join(DATA_DIR, "products.json");
 const ORDERS_FILE = join(DATA_DIR, "orders.json");
+const BUNDLED_PRODUCTS_FILE = join(BUNDLED_DATA_DIR, "products.json");
 
 const DEFAULT_PRODUCTS = [
   {
@@ -145,8 +148,19 @@ const contentTypes = {
 async function ensureData() {
   await mkdir(DATA_DIR, { recursive: true });
   await mkdir(UPLOADS_DIR, { recursive: true });
-  if (!existsSync(PRODUCTS_FILE)) await writeJson(PRODUCTS_FILE, DEFAULT_PRODUCTS);
+  if (!existsSync(PRODUCTS_FILE)) {
+    const seedProducts = await readJson(BUNDLED_PRODUCTS_FILE, DEFAULT_PRODUCTS);
+    await writeJson(PRODUCTS_FILE, seedProducts);
+  }
   if (!existsSync(ORDERS_FILE)) await writeJson(ORDERS_FILE, []);
+
+  const currentProducts = await readJson(PRODUCTS_FILE, []);
+  const bundledProducts = await readJson(BUNDLED_PRODUCTS_FILE, DEFAULT_PRODUCTS);
+  const existingIds = new Set(currentProducts.map((product) => product.id));
+  const missingBundledProducts = bundledProducts.filter((product) => product.id && !existingIds.has(product.id));
+  if (missingBundledProducts.length) {
+    await writeJson(PRODUCTS_FILE, [...currentProducts, ...missingBundledProducts]);
+  }
 }
 
 async function readJson(file, fallback) {
@@ -475,10 +489,24 @@ function serveStatic(req, res, url) {
     return;
   }
 
-  let filePath = normalize(join(__dirname, decodeURIComponent(url.pathname)));
   const root = resolve(__dirname);
+  const uploadRoot = resolve(UPLOADS_DIR);
+  const bundledUploadRoot = resolve(BUNDLED_UPLOADS_DIR);
+  let filePath = normalize(join(__dirname, decodeURIComponent(url.pathname)));
 
-  if (!filePath.startsWith(root)) {
+  if (url.pathname.startsWith("/uploads/")) {
+    const uploadName = decodeURIComponent(url.pathname.replace(/^\/uploads\//, ""));
+    const persistedUpload = normalize(join(UPLOADS_DIR, uploadName));
+    const bundledUpload = normalize(join(BUNDLED_UPLOADS_DIR, uploadName));
+    if (resolve(persistedUpload).startsWith(uploadRoot) && existsSync(persistedUpload)) {
+      filePath = persistedUpload;
+    } else if (resolve(bundledUpload).startsWith(bundledUploadRoot) && existsSync(bundledUpload)) {
+      filePath = bundledUpload;
+    }
+  }
+
+  const resolvedFilePath = resolve(filePath);
+  if (!resolvedFilePath.startsWith(root) && !resolvedFilePath.startsWith(uploadRoot) && !resolvedFilePath.startsWith(bundledUploadRoot)) {
     res.writeHead(403);
     res.end("Forbidden");
     return;
