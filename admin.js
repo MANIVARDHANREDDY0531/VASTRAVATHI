@@ -97,7 +97,6 @@ async function deleteProduct(id) {
 }
 
 async function loadOrders() {
-  if (supabaseEnabled) return [];
   return api("/api/orders");
 }
 
