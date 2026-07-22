@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vastravathi Orders</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body class="admin-body">
+  <header class="admin-header">
+    <a class="brand" href="index.html" aria-label="Back to Vastravathi">
+      <img class="brand-logo" src="vastravathi-logo.svg" alt="Vastravathi" />
+    </a>
+    <div>
+      <p class="eyebrow">Orders</p>
+      <h1>Vastravathi orders</h1>
+    </div>
+    <div class="admin-header-actions">
+      <a class="secondary-detail-btn" href="admin.html">Admin</a>
+      <a class="secondary-detail-btn" href="index.html">Website</a>
+    </div>
+  </header>
+
+  <main class="admin-main">
+    <section class="admin-panel">
+      <div class="admin-panel-heading">
+        <div>
+          <p class="eyebrow">Railway orders</p>
+          <h2>Customer orders</h2>
+        </div>
+        <button class="secondary-detail-btn" type="button" data-refresh>Refresh</button>
+      </div>
+      <p class="empty-state" data-status>Loading orders...</p>
+      <div class="admin-list" data-orders></div>
+    </section>
+  </main>
+
+  <div class="toast" data-toast>Saved</div>
+  <script>
+    const ordersNode = document.querySelector("[data-orders]");
+    const statusNode = document.querySelector("[data-status]");
+    const rupees = new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0
+    });
+
+    function renderOrders(orders) {
+      statusNode.textContent = `Railway returned ${orders.length} order(s).`;
+      if (!orders.length) {
+        ordersNode.innerHTML = '<p class="empty-state">No orders found in Railway yet.</p>';
+        return;
+      }
+
+      ordersNode.innerHTML = orders.map((order) => {
+        const customer = order.customer || {};
+        const items = Array.isArray(order.items) ? order.items : [];
+        const firstItem = items[0] || {};
+        const paymentMode = order.payment?.mode === "prepaid" ? "Prepaid" : "COD";
+        const address = [customer.address, customer.landmark, customer.city, customer.state, customer.pin]
+          .filter(Boolean)
+          .join(", ");
+
+        return `
+          <article class="admin-item order-item">
+            <img src="${firstItem.image || "vastravathi-logo.svg"}" alt="" />
+            <div class="order-copy">
+              <div class="order-title-row">
+                <h3>${order.id || "Order"}</h3>
+                <span class="payment-pill">${paymentMode}</span>
+              </div>
+              <p><strong>${customer.name || "Customer"}</strong> - ${customer.phone || "No phone"} - ${customer.email || "No email"}</p>
+              <p>${address || "No address added"}</p>
+              <p>${items.map((item) => `${item.name} x ${item.qty || 1}`).join(", ")}</p>
+              <span>${rupees.format(order.total || order.subtotal || 0)} - ${order.payment?.collector || "Shiprocket"} - ${order.payment?.status || "COD Pending"} - ${order.shipmentStatus || "Ready for Shiprocket"}</span>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    async function loadOrders() {
+      statusNode.textContent = "Checking Railway orders...";
+      const response = await fetch(`/api/orders?ts=${Date.now()}`, { cache: "no-store" });
+      if (response.status === 401) {
+        window.location.href = "/admin-login.html";
+        return;
+      }
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Orders could not load");
+      }
+      const orders = await response.json();
+      renderOrders(Array.isArray(orders) ? orders : []);
+    }
+
+    document.querySelector("[data-refresh]").addEventListener("click", () => {
+      loadOrders().catch((error) => {
+        statusNode.textContent = error.message;
+      });
+    });
+
+    loadOrders().catch((error) => {
+      statusNode.textContent = error.message;
+    });
+  </script>
+</body>
+</html>

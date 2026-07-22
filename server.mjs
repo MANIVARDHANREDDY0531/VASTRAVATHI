@@ -484,7 +484,7 @@ async function handleApi(req, res, url) {
 }
 
 function serveStatic(req, res, url) {
-  if ((url.pathname === "/admin.html" || url.pathname === "/admin.js") && !isAdmin(req)) {
+  if ((url.pathname === "/admin.html" || url.pathname === "/admin.js" || url.pathname === "/orders.html") && !isAdmin(req)) {
     redirectToLogin(res);
     return;
   }

@@ -26,6 +26,10 @@ async function main() {
 
   const files = [
     "index.html",
+    "admin.html",
+    "orders.html",
+    "admin.css",
+    "admin.js",
     "styles.css",
     "script.js",
     "live-config.js",
