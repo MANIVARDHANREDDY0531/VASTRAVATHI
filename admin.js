@@ -10,6 +10,7 @@ const orderList = document.querySelector("[data-order-list]");
 const toast = document.querySelector("[data-toast]");
 const photoUpload = document.querySelector("[data-photo-upload]");
 const uploadPreview = document.querySelector("[data-upload-preview]");
+const orderApiStatus = document.querySelector("[data-order-api-status]");
 
 let products = [];
 let orders = [];
@@ -97,7 +98,14 @@ async function deleteProduct(id) {
 }
 
 async function loadOrders() {
-  return api(`/api/orders?ts=${Date.now()}`);
+  if (orderApiStatus) orderApiStatus.textContent = "Checking orders from Railway...";
+  const result = await api(`/api/orders?ts=${Date.now()}`);
+  if (orderApiStatus) {
+    orderApiStatus.textContent = Array.isArray(result)
+      ? `Railway returned ${result.length} order(s).`
+      : "Railway returned an unexpected orders response.";
+  }
+  return Array.isArray(result) ? result : [];
 }
 
 async function uploadPhoto(file) {
@@ -303,8 +311,10 @@ async function loadAll() {
   if (orderResult.status === "fulfilled") {
     orders = orderResult.value;
   } else {
-    orderList.innerHTML = `<p class="empty-state">Orders could not load: ${orderResult.reason.message}</p>`;
-    showToast(`Orders: ${orderResult.reason.message}`);
+    const message = orderResult.reason?.message || "Unknown error";
+    if (orderApiStatus) orderApiStatus.textContent = `Orders could not load: ${message}`;
+    orderList.innerHTML = `<p class="empty-state">Orders could not load: ${message}</p>`;
+    showToast(`Orders: ${message}`);
   }
 
   renderProducts();
