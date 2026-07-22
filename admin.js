@@ -97,7 +97,7 @@ async function deleteProduct(id) {
 }
 
 async function loadOrders() {
-  return api("/api/orders");
+  return api(`/api/orders?ts=${Date.now()}`);
 }
 
 async function uploadPhoto(file) {
@@ -289,12 +289,26 @@ photoUpload.addEventListener("change", async (event) => {
 });
 
 async function loadAll() {
-  [products, orders] = await Promise.all([
+  const [productResult, orderResult] = await Promise.allSettled([
     loadProducts(),
     loadOrders()
   ]);
+
+  if (productResult.status === "fulfilled") {
+    products = productResult.value;
+  } else {
+    showToast(`Products: ${productResult.reason.message}`);
+  }
+
+  if (orderResult.status === "fulfilled") {
+    orders = orderResult.value;
+  } else {
+    orderList.innerHTML = `<p class="empty-state">Orders could not load: ${orderResult.reason.message}</p>`;
+    showToast(`Orders: ${orderResult.reason.message}`);
+  }
+
   renderProducts();
-  renderOrders();
+  if (orderResult.status === "fulfilled") renderOrders();
   updateStats();
 }
 
