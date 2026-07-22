@@ -260,12 +260,13 @@ function normalizeOrder(input) {
     : [];
   const calculatedSubtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
   const subtotal = Number(input.subtotal || calculatedSubtotal || 0);
-  const paymentMode = input.payment?.mode || input.customer?.payment || "cod";
+  const requestedPaymentMode = input.payment?.mode || input.customer?.payment || "cod";
+  const paymentMode = requestedPaymentMode === "prepaid" ? "prepaid" : "cod";
   const customer = input.customer || {};
   const payment = {
     mode: paymentMode,
-    collector: input.payment?.collector || (paymentMode === "cod" ? "Shiprocket" : "Razorpay"),
-    status: input.payment?.status || (paymentMode === "cod" ? "COD Pending" : "Razorpay Pending"),
+    collector: paymentMode === "cod" ? "Shiprocket" : "Razorpay",
+    status: paymentMode === "cod" ? "COD Pending" : "Razorpay Pending",
     razorpayOrderId: input.payment?.razorpayOrderId || null,
     razorpayPaymentId: input.payment?.razorpayPaymentId || null
   };

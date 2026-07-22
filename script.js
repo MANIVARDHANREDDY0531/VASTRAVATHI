@@ -106,7 +106,7 @@ const state = {
 };
 
 const apiBase = window.location.protocol === "file:" ? "http://127.0.0.1:4180" : "";
-const apiEnabled = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
+const apiEnabled = window.location.protocol !== "file:";
 const liveConfig = window.VASTRAVATHI_LIVE_CONFIG || {};
 const supabaseEnabled = Boolean(liveConfig.supabaseUrl && liveConfig.supabaseAnonKey);
 const productsTable = liveConfig.productsTable || "products";
@@ -609,7 +609,8 @@ document.querySelector("[data-checkout-form]").addEventListener("submit", async 
   const checkoutForm = event.currentTarget;
   const formData = new FormData(checkoutForm);
   const customer = Object.fromEntries(formData.entries());
-  const paymentMode = customer.payment || "cod";
+  const selectedPayment = checkoutForm.querySelector("input[name='payment']:checked")?.value;
+  const paymentMode = selectedPayment === "prepaid" ? "prepaid" : "cod";
   delete customer.payment;
   const order = {
     customer,
@@ -645,7 +646,7 @@ document.querySelector("[data-checkout-form]").addEventListener("submit", async 
     checkoutForm.reset();
     syncPaymentUi();
     showOrderSuccess(savedOrder);
-    showToast(paymentMode === "cod" ? "COD order saved for Shiprocket" : "Prepaid order saved for Razorpay");
+    showToast(savedOrder.payment?.mode === "prepaid" ? "Prepaid order saved for Razorpay" : "COD order saved for Shiprocket");
   } catch (error) {
     showToast(error.message || "Order could not be saved");
   }
