@@ -108,7 +108,7 @@ const state = {
 const apiBase = window.location.protocol === "file:" ? "http://127.0.0.1:4180" : "";
 const apiEnabled = window.location.protocol !== "file:";
 const liveConfig = window.VASTRAVATHI_LIVE_CONFIG || {};
-const supabaseEnabled = Boolean(liveConfig.supabaseUrl && liveConfig.supabaseAnonKey);
+const supabaseEnabled = Boolean(liveConfig.useLiveStorage && liveConfig.supabaseUrl && liveConfig.supabaseAnonKey);
 const productsTable = liveConfig.productsTable || "products";
 
 const rupees = new Intl.NumberFormat("en-IN", {

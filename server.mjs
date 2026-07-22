@@ -412,14 +412,14 @@ async function handleApi(req, res, url) {
     }
     for (const orderItem of order.items) {
       const product = products.find((item) => item.id === orderItem.id);
-      if (!product) return sendError(res, 400, `${orderItem.name} is no longer available.`);
+      if (!product) continue;
       const stock = Number(product.stock ?? 0);
       if (stock <= 0) return sendError(res, 400, `${product.name} is sold out.`);
       if (orderItem.qty > stock) return sendError(res, 400, `Only ${stock} piece(s) available for ${product.name}.`);
     }
     order.items.forEach((orderItem) => {
       const product = products.find((item) => item.id === orderItem.id);
-      product.stock = Math.max(0, Number(product.stock ?? 0) - orderItem.qty);
+      if (product) product.stock = Math.max(0, Number(product.stock ?? 0) - orderItem.qty);
     });
     orders.unshift(order);
     await writeJson(PRODUCTS_FILE, products);

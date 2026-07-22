@@ -14,8 +14,8 @@ const uploadPreview = document.querySelector("[data-upload-preview]");
 let products = [];
 let orders = [];
 const liveConfig = window.VASTRAVATHI_LIVE_CONFIG || {};
-const supabaseEnabled = Boolean(liveConfig.supabaseUrl && liveConfig.supabaseAnonKey);
-const cloudinaryEnabled = Boolean(liveConfig.cloudinaryCloudName && liveConfig.cloudinaryUploadPreset);
+const supabaseEnabled = Boolean(liveConfig.useLiveStorage && liveConfig.supabaseUrl && liveConfig.supabaseAnonKey);
+const cloudinaryEnabled = Boolean(liveConfig.useLiveStorage && liveConfig.cloudinaryCloudName && liveConfig.cloudinaryUploadPreset);
 const productsTable = liveConfig.productsTable || "products";
 
 function showToast(message) {
