@@ -33,6 +33,18 @@
     <section class="admin-panel">
       <div class="admin-panel-heading">
         <div>
+          <p class="eyebrow">Orders</p>
+          <h2>Shiprocket-ready orders</h2>
+        </div>
+        <button class="secondary-detail-btn" type="button" data-refresh-orders>Refresh</button>
+      </div>
+      <p class="empty-state" data-order-api-status>Checking orders...</p>
+      <div class="admin-list" data-order-list></div>
+    </section>
+
+    <section class="admin-panel">
+      <div class="admin-panel-heading">
+        <div>
           <p class="eyebrow">Inventory</p>
           <h2>Add or update sarees</h2>
         </div>
@@ -64,18 +76,6 @@
         <button class="primary-btn span-2" type="submit">Save Product</button>
       </form>
       <div class="admin-list" data-product-list></div>
-    </section>
-
-    <section class="admin-panel">
-      <div class="admin-panel-heading">
-        <div>
-          <p class="eyebrow">Orders</p>
-          <h2>Shiprocket-ready orders</h2>
-        </div>
-        <button class="secondary-detail-btn" type="button" data-refresh-orders>Refresh</button>
-      </div>
-      <p class="empty-state" data-order-api-status>Checking orders...</p>
-      <div class="admin-list" data-order-list></div>
     </section>
   </main>
 
