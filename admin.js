@@ -381,13 +381,9 @@ document.addEventListener("change", async (event) => {
   showToast("Order updated");
 });
 
-if (supabaseEnabled) {
-  loadAll().catch((error) => showToast(error.message));
-} else {
-  api("/api/admin/me")
-    .then((session) => {
-      if (!session.loggedIn) window.location.href = "/admin-login.html";
-      return loadAll();
-    })
-    .catch((error) => showToast(error.message));
-}
+api("/api/admin/me")
+  .then((session) => {
+    if (!session.loggedIn) window.location.href = "/admin-login.html";
+    return loadAll();
+  })
+  .catch((error) => showToast(error.message));
