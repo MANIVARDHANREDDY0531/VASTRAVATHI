@@ -20,10 +20,12 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
   margin: 0;
+  overflow-x: hidden;
   background:
     radial-gradient(circle at 12% 8%, rgba(217, 164, 65, 0.2), transparent 28rem),
     radial-gradient(circle at 88% 36%, rgba(152, 35, 66, 0.12), transparent 32rem),
@@ -1790,16 +1792,19 @@ dialog::backdrop {
   }
 
   .nav {
+    display: grid;
+    grid-template-columns: 1fr auto;
     gap: 0.7rem;
-    padding-inline: 0.9rem;
+    padding: 0.8rem 0.85rem;
   }
 
   .brand {
+    min-width: 0;
     font-size: 1.2rem;
   }
 
   .brand-logo {
-    width: 152px;
+    width: min(148px, 48vw);
   }
 
   .brand-mark {
@@ -1811,14 +1816,50 @@ dialog::backdrop {
     display: none;
   }
 
+  .menu-toggle {
+    justify-self: end;
+    width: 3rem;
+    min-width: 3rem;
+    height: 3rem;
+    min-height: 3rem;
+  }
+
+  .nav-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+    width: 100%;
+    gap: 0.45rem;
+    margin-left: 0;
+  }
+
+  .icon-btn,
+  .cart-button {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+
+  .cart-button {
+    width: auto;
+    padding-inline: 0.7rem;
+  }
+
   .nav-links.open {
+    grid-column: 1 / -1;
     flex-direction: column;
     align-items: flex-start;
+    gap: 0.8rem;
+    width: 100%;
   }
 
   .hero {
-    min-height: 760px;
-    padding: 6rem 1rem 1rem;
+    min-height: auto;
+    align-items: start;
+    padding: 4.6rem 1rem 1.15rem;
+  }
+
+  .hero-content {
+    width: 100%;
+    max-width: 100%;
   }
 
   .couture-note {
@@ -1848,7 +1889,16 @@ dialog::backdrop {
   }
 
   .hero h1 {
-    font-size: clamp(3.5rem, 18vw, 5.5rem);
+    max-width: 100%;
+    font-size: clamp(3.15rem, 14vw, 4.2rem);
+    line-height: 0.95;
+    overflow-wrap: anywhere;
+  }
+
+  .hero p:not(.eyebrow) {
+    max-width: 100%;
+    font-size: 1.04rem;
+    line-height: 1.55;
   }
 
   .hero-actions,
@@ -1865,6 +1915,20 @@ dialog::backdrop {
   .primary-btn,
   .secondary-btn {
     width: 100%;
+    min-height: 3.25rem;
+    padding-inline: 1rem;
+    text-align: center;
+  }
+
+  .hero-card,
+  .couture-note {
+    max-width: 100%;
+    padding: 0.95rem;
+  }
+
+  .hero-card strong,
+  .couture-note strong {
+    font-size: 1.5rem;
   }
 
   .promise-strip,
@@ -1900,6 +1964,25 @@ dialog::backdrop {
   .form-grid,
   .payment-options {
     grid-template-columns: 1fr;
+  }
+
+  .checkout-modal,
+  .product-detail-modal,
+  .quick-view,
+  .search-modal {
+    width: min(100% - 0.8rem, 520px);
+    max-height: calc(100svh - 1rem);
+  }
+
+  .checkout-layout,
+  .detail-hero,
+  .quick-layout {
+    padding: 0.65rem;
+  }
+
+  .checkout-form,
+  .checkout-summary {
+    padding: 0.9rem;
   }
 
   .detail-copy {
@@ -1998,7 +2081,10 @@ dialog::backdrop {
 
   .whatsapp-float {
     right: 0.75rem;
-    bottom: 4.2rem;
+    bottom: 0.9rem;
+    min-height: 2.65rem;
+    padding: 0.68rem 0.9rem;
+    font-size: 0.95rem;
   }
 }
 
