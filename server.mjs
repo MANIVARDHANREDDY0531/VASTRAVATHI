@@ -1,14 +1,35 @@
 import { createServer } from "node:http";
+import { request as httpsRequest } from "node:https";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
-import { createReadStream, existsSync } from "node:fs";
+import { createReadStream, existsSync, readFileSync } from "node:fs";
 import { dirname, extname, join, normalize, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+function loadEnvFile(file) {
+  if (!existsSync(file)) return;
+  const content = String(readFileSync(file, "utf8"));
+  content.split(/\r?\n/).forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#") || !trimmed.includes("=")) return;
+    const [key, ...valueParts] = trimmed.split("=");
+    if (!process.env[key]) {
+      process.env[key] = valueParts.join("=").replace(/^["']|["']$/g, "");
+    }
+  });
+}
+
+loadEnvFile(join(process.cwd(), ".env"));
+loadEnvFile(join(__dirname, ".env"));
+
 const PORT = Number(process.env.PORT || 4180);
 const ADMIN_USER = process.env.ADMIN_USER || "MANIVARDHANREDDY";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "minnu9028";
 const ADMIN_SESSION = "vastravathi_admin";
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || "";
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || "";
 const BUNDLED_DATA_DIR = join(__dirname, "data");
 const BUNDLED_UPLOADS_DIR = join(__dirname, "uploads");
 const DATA_DIR = process.env.VASTRAVATHI_DATA_DIR || BUNDLED_DATA_DIR;
@@ -227,6 +248,54 @@ async function readRawBody(req) {
   return Buffer.concat(chunks);
 }
 
+function razorpayReady() {
+  return Boolean(RAZORPAY_KEY_ID && RAZORPAY_KEY_SECRET);
+}
+
+function verifyRazorpaySignature({ orderId, paymentId, signature }) {
+  if (!orderId || !paymentId || !signature || !RAZORPAY_KEY_SECRET) return false;
+  const expected = createHmac("sha256", RAZORPAY_KEY_SECRET)
+    .update(`${orderId}|${paymentId}`)
+    .digest("hex");
+  const expectedBuffer = Buffer.from(expected);
+  const actualBuffer = Buffer.from(String(signature));
+  return expectedBuffer.length === actualBuffer.length && timingSafeEqual(expectedBuffer, actualBuffer);
+}
+
+function razorpayRequest(path, payload) {
+  return new Promise((resolvePromise, reject) => {
+    const body = JSON.stringify(payload);
+    const auth = Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString("base64");
+    const request = httpsRequest({
+      hostname: "api.razorpay.com",
+      path,
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(body)
+      }
+    }, (response) => {
+      const chunks = [];
+      response.on("data", (chunk) => chunks.push(chunk));
+      response.on("end", () => {
+        const responseText = Buffer.concat(chunks).toString("utf8");
+        const data = responseText ? JSON.parse(responseText) : {};
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          resolvePromise(data);
+          return;
+        }
+        const error = new Error(data.error?.description || data.error?.reason || "Razorpay request failed");
+        error.statusCode = response.statusCode;
+        reject(error);
+      });
+    });
+    request.on("error", reject);
+    request.write(body);
+    request.end();
+  });
+}
+
 function makeId(prefix) {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -280,9 +349,10 @@ function normalizeOrder(input) {
   const payment = {
     mode: paymentMode,
     collector: paymentMode === "cod" ? "Shiprocket" : "Razorpay",
-    status: paymentMode === "cod" ? "COD Pending" : "Razorpay Pending",
+    status: paymentMode === "cod" ? "COD Pending" : String(input.payment?.status || "Razorpay Pending"),
     razorpayOrderId: input.payment?.razorpayOrderId || null,
-    razorpayPaymentId: input.payment?.razorpayPaymentId || null
+    razorpayPaymentId: input.payment?.razorpayPaymentId || null,
+    razorpaySignature: input.payment?.razorpaySignature || null
   };
   return {
     id: makeId("order"),
@@ -328,6 +398,46 @@ async function handleApi(req, res, url) {
 
   if (url.pathname === "/api/health") {
     sendJson(res, 200, { ok: true, app: "Vastravathi backend" });
+    return;
+  }
+
+  if (url.pathname === "/api/create-order" && req.method === "POST") {
+    if (!razorpayReady()) return sendError(res, 500, "Razorpay keys are not configured.");
+    const body = await readBody(req);
+    const amount = Math.round(Number(body.amount || 0));
+    const currency = String(body.currency || "INR").trim().toUpperCase();
+    const receipt = String(body.receipt || makeId("receipt")).trim().slice(0, 40);
+    if (!Number.isFinite(amount) || amount < 100) return sendError(res, 400, "Minimum Razorpay amount is 100 paise.");
+
+    try {
+      const razorpayOrder = await razorpayRequest("/v1/orders", {
+        amount,
+        currency,
+        receipt,
+        payment_capture: 1
+      });
+      sendJson(res, 200, {
+        key_id: RAZORPAY_KEY_ID,
+        order_id: razorpayOrder.id,
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency
+      });
+    } catch (error) {
+      sendError(res, error.statusCode === 401 ? 401 : 500, error.message || "Razorpay order could not be created.");
+    }
+    return;
+  }
+
+  if (url.pathname === "/api/verify-payment" && req.method === "POST") {
+    const body = await readBody(req);
+    const orderId = body.razorpay_order_id || body.order_id;
+    const paymentId = body.razorpay_payment_id || body.payment_id;
+    const signature = body.razorpay_signature || body.signature;
+    if (!orderId || !paymentId || !signature) return sendError(res, 400, "Payment verification fields are required.");
+    if (!verifyRazorpaySignature({ orderId, paymentId, signature })) {
+      return sendError(res, 400, "Payment signature mismatch.");
+    }
+    sendJson(res, 200, { ok: true });
     return;
   }
 
@@ -423,6 +533,16 @@ async function handleApi(req, res, url) {
     if (!order.items.length) return sendError(res, 400, "Order must include at least one item.");
     if (!order.customer.name || !order.customer.phone || !order.customer.address || !order.customer.city || !order.customer.state || !order.customer.pin) {
       return sendError(res, 400, "Name, phone, address, city, state, and PIN code are required.");
+    }
+    if (order.payment.mode === "prepaid") {
+      const verified = verifyRazorpaySignature({
+        orderId: order.payment.razorpayOrderId,
+        paymentId: order.payment.razorpayPaymentId,
+        signature: order.payment.razorpaySignature
+      });
+      if (!verified) return sendError(res, 400, "Verified Razorpay payment is required for prepaid orders.");
+      order.payment.status = "Paid";
+      order.shipmentStatus = "Razorpay paid - Ready for Shiprocket";
     }
     for (const orderItem of order.items) {
       const product = products.find((item) => item.id === orderItem.id);

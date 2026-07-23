@@ -538,6 +538,83 @@ function createOrder(order) {
   });
 }
 
+async function createRazorpayOrder(order) {
+  const amount = Math.max(100, Math.round(Number(order.subtotal || 0) * 100));
+  const response = await fetch(`${apiBase}/api/create-order`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      amount,
+      currency: "INR",
+      receipt: `vastravathi_${Date.now()}`
+    })
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.error || "Razorpay order could not be created");
+  }
+  return response.json();
+}
+
+async function verifyRazorpayPayment(payment) {
+  const response = await fetch(`${apiBase}/api/verify-payment`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payment)
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.error || "Razorpay payment verification failed");
+  }
+  return response.json();
+}
+
+function openRazorpayCheckout(order) {
+  if (!window.Razorpay) {
+    return Promise.reject(new Error("Razorpay checkout could not load. Please refresh and try again."));
+  }
+
+  return createRazorpayOrder(order).then((razorpayOrder) => new Promise((resolve, reject) => {
+    const checkout = new window.Razorpay({
+      key: razorpayOrder.key_id,
+      amount: razorpayOrder.amount,
+      currency: razorpayOrder.currency,
+      name: "Vastravathi",
+      description: "Prepaid saree order",
+      order_id: razorpayOrder.order_id,
+      prefill: {
+        name: order.customer.name,
+        email: order.customer.email,
+        contact: order.customer.phone
+      },
+      notes: {
+        brand: "Vastravathi",
+        shipping_provider: "Shiprocket"
+      },
+      theme: {
+        color: "#982342"
+      },
+      modal: {
+        ondismiss: () => reject(new Error("Payment cancelled by customer"))
+      },
+      handler: async (response) => {
+        try {
+          await verifyRazorpayPayment(response);
+          resolve(response);
+        } catch (error) {
+          reject(error);
+        }
+      }
+    });
+
+    checkout.on("payment.failed", (response) => {
+      reject(new Error(response.error?.description || "Razorpay payment failed"));
+    });
+
+    checkout.open();
+  }));
+}
+
 function showOrderSuccess(order) {
   const isCod = order.payment?.mode === "cod";
   document.querySelector("[data-success-title]").textContent = isCod ? "COD order placed" : "Prepaid order created";
@@ -674,6 +751,15 @@ document.querySelector("[data-checkout-form]").addEventListener("submit", async 
     }
   };
   try {
+    submitOrder.disabled = true;
+    submitOrder.textContent = paymentMode === "prepaid" ? "Opening Razorpay..." : "Saving order...";
+    if (paymentMode === "prepaid") {
+      const payment = await openRazorpayCheckout(order);
+      order.payment.razorpayOrderId = payment.razorpay_order_id;
+      order.payment.razorpayPaymentId = payment.razorpay_payment_id;
+      order.payment.razorpaySignature = payment.razorpay_signature;
+      order.payment.status = "Paid";
+    }
     const savedOrder = await createOrder(order);
     state.cart = [];
     renderCart();
@@ -685,6 +771,9 @@ document.querySelector("[data-checkout-form]").addEventListener("submit", async 
     showToast(savedOrder.payment?.mode === "prepaid" ? "Prepaid order saved for Razorpay" : "COD order saved for Shiprocket");
   } catch (error) {
     showToast(error.message || "Order could not be saved");
+  } finally {
+    submitOrder.disabled = false;
+    syncPaymentUi();
   }
 });
 
