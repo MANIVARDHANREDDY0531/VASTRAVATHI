@@ -1919,3 +1919,213 @@ dialog::backdrop {
     bottom: 4.2rem;
   }
 }
+
+/* Premium saree visual upgrade */
+.luxury-thread {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  opacity: 0.75;
+  background:
+    linear-gradient(118deg, transparent 0 42%, rgba(246, 223, 154, 0.42) 42% 42.15%, transparent 42.15% 100%),
+    linear-gradient(126deg, transparent 0 58%, rgba(255, 244, 218, 0.32) 58% 58.12%, transparent 58.12% 100%);
+  mask-image: linear-gradient(90deg, transparent, #000 20%, #000 74%, transparent);
+  animation: threadGlide 9s ease-in-out infinite alternate;
+}
+
+@keyframes threadGlide {
+  from { transform: translateX(-1.4rem); opacity: 0.45; }
+  to { transform: translateX(1.2rem); opacity: 0.9; }
+}
+
+.hero-media img,
+.craft-image img,
+.premium-product-backdrop img,
+.edit-card img {
+  width: 100%;
+}
+
+.saree-panel {
+  transform-origin: center;
+}
+
+.saree-panel img {
+  animation: panelGlow 6s ease-in-out infinite alternate;
+}
+
+@keyframes panelGlow {
+  from { filter: saturate(1.04) contrast(1.03) brightness(0.95); }
+  to { filter: saturate(1.2) contrast(1.08) brightness(1.08); }
+}
+
+.signature-edits {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  width: min(1240px, calc(100% - 2.6rem));
+  margin: clamp(2.5rem, 5vw, 4rem) auto 0;
+}
+
+.edit-card {
+  position: relative;
+  min-height: clamp(250px, 32vw, 430px);
+  overflow: hidden;
+  border: 1px solid rgba(217, 164, 65, 0.42);
+  border-radius: 8px;
+  background: #241112;
+  box-shadow: 0 24px 72px rgba(38, 8, 19, 0.22);
+  isolation: isolate;
+}
+
+.edit-card::before {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(180deg, transparent 45%, rgba(18, 6, 11, 0.72)),
+    radial-gradient(circle at 20% 10%, rgba(246, 223, 154, 0.28), transparent 12rem);
+  content: "";
+}
+
+.edit-card::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 0 38%, rgba(255, 255, 255, 0.22) 45%, transparent 54%);
+  transform: translateX(-120%);
+  content: "";
+}
+
+.edit-card:hover::after {
+  animation: silkShine 0.95s ease;
+}
+
+@keyframes silkShine {
+  to { transform: translateX(120%); }
+}
+
+.edit-card img {
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.02);
+  transition: transform 0.8s ease, filter 0.8s ease;
+}
+
+.edit-card:hover img {
+  transform: scale(1.09);
+  filter: saturate(1.16) contrast(1.05);
+}
+
+.edit-card span {
+  position: absolute;
+  z-index: 3;
+  left: 1rem;
+  right: 1rem;
+  bottom: 1rem;
+  color: #fff4dc;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.35rem, 2.2vw, 2rem);
+  line-height: 1;
+  text-shadow: 0 12px 34px rgba(0, 0, 0, 0.42);
+}
+
+.product-card {
+  animation: productRise 0.7s ease both;
+}
+
+.product-card:nth-child(2n) { animation-delay: 0.08s; }
+.product-card:nth-child(3n) { animation-delay: 0.14s; }
+
+@keyframes productRise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.product-card:hover {
+  box-shadow: 0 30px 80px rgba(38, 8, 19, 0.22);
+}
+
+.craft-band {
+  position: relative;
+  overflow: hidden;
+}
+
+.craft-band::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 12% 20%, rgba(246, 223, 154, 0.22), transparent 18rem),
+    linear-gradient(120deg, transparent 0 52%, rgba(152, 35, 66, 0.08) 52% 100%);
+  content: "";
+}
+
+.craft-image,
+.craft-copy {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 900px) {
+  .signature-edits {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .signature-edits {
+    grid-template-columns: 1fr;
+  }
+
+  .edit-card {
+    min-height: 330px;
+  }
+}
+
+/* Premium policy/contact page imagery */
+.policy-hero {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 1.4rem;
+  border: 1px solid rgba(217, 164, 65, 0.32);
+  border-radius: 8px;
+  padding: clamp(2rem, 6vw, 4rem);
+  background:
+    linear-gradient(90deg, rgba(255, 248, 238, 0.96), rgba(255, 248, 238, 0.76) 58%, rgba(38, 8, 19, 0.18)),
+    url("uploads/saree_photo_mrrvz7fq_9m05ew.jpg") right center / cover no-repeat;
+  box-shadow: 0 24px 70px rgba(38, 8, 19, 0.12);
+  isolation: isolate;
+}
+
+.policy-hero::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 14% 18%, rgba(246, 223, 154, 0.28), transparent 18rem),
+    linear-gradient(115deg, transparent 0 60%, rgba(246, 223, 154, 0.28) 60% 60.2%, transparent 60.2%);
+  content: "";
+  animation: threadGlide 8s ease-in-out infinite alternate;
+}
+
+.policy-card,
+.contact-grid .policy-card {
+  transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+}
+
+.policy-card:hover,
+.contact-grid .policy-card:hover {
+  border-color: rgba(152, 35, 66, 0.28);
+  box-shadow: 0 28px 82px rgba(38, 8, 19, 0.16);
+  transform: translateY(-4px);
+}
+
+@media (max-width: 700px) {
+  .policy-hero {
+    background:
+      linear-gradient(180deg, rgba(255, 248, 238, 0.96), rgba(255, 248, 238, 0.82)),
+      url("uploads/saree_photo_mrrvz7fq_9m05ew.jpg") center / cover no-repeat;
+  }
+}
