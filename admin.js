@@ -216,6 +216,13 @@ function renderOrders() {
     const address = [customer.address, customer.landmark, customer.city, customer.state, customer.pin]
       .filter(Boolean)
       .join(", ");
+    const shiprocketMeta = [
+      order.shiprocket?.externalOrderId ? `SR Order: ${order.shiprocket.externalOrderId}` : "",
+      order.shiprocket?.shipmentId ? `Shipment: ${order.shiprocket.shipmentId}` : "",
+      order.shiprocket?.awb ? `AWB: ${order.shiprocket.awb}` : "",
+      order.shiprocket?.courier ? `Courier: ${order.shiprocket.courier}` : "",
+      order.shiprocket?.lastError ? `Shiprocket error: ${order.shiprocket.lastError}` : ""
+    ].filter(Boolean).join(" · ");
 
     return `
       <article class="admin-item order-item">
@@ -361,9 +368,15 @@ document.addEventListener("click", async (event) => {
   }
 
   if (syncId) {
-    await api(`/api/shiprocket/sync/${syncId}`, { method: "POST", body: "{}" });
-    await loadAll();
-    showToast("Shiprocket placeholder updated");
+    try {
+      const result = await api(`/api/shiprocket/sync/${syncId}`, { method: "POST", body: "{}" });
+      await loadAll();
+      const order = result.order || result;
+      showToast(order.shiprocket?.awb ? `Shiprocket synced: ${order.shiprocket.awb}` : "Shiprocket order created");
+    } catch (error) {
+      await loadAll();
+      showToast(error.message || "Shiprocket sync failed");
+    }
   }
 
   if (copyId) {

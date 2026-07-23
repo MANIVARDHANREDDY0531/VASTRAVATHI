@@ -31,6 +31,16 @@ const ADMIN_SESSION = "vastravathi_admin";
 const PREPAID_DISCOUNT_RATE = 0.1;
 const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || "";
 const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || "";
+const SHIPROCKET_EMAIL = process.env.SHIPROCKET_EMAIL || "";
+const SHIPROCKET_PASSWORD = process.env.SHIPROCKET_PASSWORD || "";
+const SHIPROCKET_PICKUP_LOCATION = process.env.SHIPROCKET_PICKUP_LOCATION || "";
+const SHIPROCKET_CHANNEL_ID = process.env.SHIPROCKET_CHANNEL_ID || "";
+const SHIPROCKET_COMPANY_NAME = process.env.SHIPROCKET_COMPANY_NAME || "Vastravathi";
+const SHIPROCKET_SUPPORT_EMAIL = process.env.SHIPROCKET_SUPPORT_EMAIL || "souledsarees@gmail.com";
+const SHIPROCKET_PACKAGE_LENGTH_CM = Number(process.env.SHIPROCKET_PACKAGE_LENGTH_CM || 32);
+const SHIPROCKET_PACKAGE_BREADTH_CM = Number(process.env.SHIPROCKET_PACKAGE_BREADTH_CM || 24);
+const SHIPROCKET_PACKAGE_HEIGHT_CM = Number(process.env.SHIPROCKET_PACKAGE_HEIGHT_CM || 4);
+const SHIPROCKET_PACKAGE_WEIGHT_KG = Number(process.env.SHIPROCKET_PACKAGE_WEIGHT_KG || 0.5);
 const BUNDLED_DATA_DIR = join(__dirname, "data");
 const BUNDLED_UPLOADS_DIR = join(__dirname, "uploads");
 const DATA_DIR = process.env.VASTRAVATHI_DATA_DIR || BUNDLED_DATA_DIR;
@@ -253,6 +263,10 @@ function razorpayReady() {
   return Boolean(RAZORPAY_KEY_ID && RAZORPAY_KEY_SECRET);
 }
 
+function shiprocketReady() {
+  return Boolean(SHIPROCKET_EMAIL && SHIPROCKET_PASSWORD && SHIPROCKET_PICKUP_LOCATION);
+}
+
 function verifyRazorpaySignature({ orderId, paymentId, signature }) {
   if (!orderId || !paymentId || !signature || !RAZORPAY_KEY_SECRET) return false;
   const expected = createHmac("sha256", RAZORPAY_KEY_SECRET)
@@ -298,6 +312,140 @@ function razorpayRequest(path, payload) {
     request.write(body);
     request.end();
   });
+}
+
+function shiprocketRequest(path, payload, token = "") {
+  return new Promise((resolvePromise, reject) => {
+    const body = JSON.stringify(payload);
+    const headers = {
+      "Content-Type": "application/json",
+      "Content-Length": Buffer.byteLength(body)
+    };
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    const request = httpsRequest({
+      hostname: "apiv2.shiprocket.in",
+      path,
+      method: "POST",
+      headers
+    }, (response) => {
+      const chunks = [];
+      response.on("data", (chunk) => chunks.push(chunk));
+      response.on("end", () => {
+        const responseText = Buffer.concat(chunks).toString("utf8");
+        let data = {};
+        try {
+          data = responseText ? JSON.parse(responseText) : {};
+        } catch {
+          data = { message: responseText };
+        }
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          resolvePromise(data);
+          return;
+        }
+        const message = data.message || data.error || data.errors?.join?.(", ") || "Shiprocket request failed";
+        const error = new Error(message);
+        error.statusCode = response.statusCode;
+        error.data = data;
+        reject(error);
+      });
+    });
+    request.setTimeout(20000, () => {
+      request.destroy(new Error("Shiprocket is taking too long to respond. Please try again."));
+    });
+    request.on("error", reject);
+    request.write(body);
+    request.end();
+  });
+}
+
+async function getShiprocketToken() {
+  if (!shiprocketReady()) {
+    throw new Error("Shiprocket email, password, and pickup location are required.");
+  }
+  const response = await shiprocketRequest("/v1/external/auth/login", {
+    email: SHIPROCKET_EMAIL,
+    password: SHIPROCKET_PASSWORD
+  });
+  if (!response.token) throw new Error("Shiprocket login did not return a token.");
+  return response.token;
+}
+
+function splitCustomerName(name) {
+  const parts = String(name || "Customer").trim().split(/\s+/).filter(Boolean);
+  return {
+    firstName: parts.shift() || "Customer",
+    lastName: parts.join(" ")
+  };
+}
+
+function buildShiprocketPayload(order) {
+  const customer = order.customer || {};
+  const { firstName, lastName } = splitCustomerName(customer.name);
+  const externalOrderId = order.shiprocket?.externalOrderId || `VS${Date.now()}`;
+  const paymentMethod = order.payment?.mode === "cod" ? "COD" : "Prepaid";
+  const items = Array.isArray(order.items) ? order.items : [];
+
+  return {
+    order_id: externalOrderId,
+    order_date: new Date(order.createdAt || Date.now()).toISOString().slice(0, 19).replace("T", " "),
+    pickup_location: SHIPROCKET_PICKUP_LOCATION,
+    channel_id: SHIPROCKET_CHANNEL_ID || "",
+    comment: "Vastravathi website order",
+    company_name: SHIPROCKET_COMPANY_NAME,
+    billing_customer_name: firstName,
+    billing_last_name: lastName,
+    billing_address: customer.address,
+    billing_address_2: customer.landmark || "",
+    billing_city: customer.city,
+    billing_pincode: customer.pin,
+    billing_state: customer.state,
+    billing_country: "India",
+    billing_email: customer.email || SHIPROCKET_SUPPORT_EMAIL,
+    billing_phone: String(customer.phone || "").replace(/\D/g, "").slice(-10),
+    shipping_is_billing: true,
+    order_items: items.map((item) => ({
+      name: item.name,
+      sku: item.sku || item.id || item.name,
+      units: Number(item.qty || 1),
+      selling_price: Number(item.price || 0),
+      discount: 0,
+      tax: "",
+      hsn: ""
+    })),
+    payment_method: paymentMethod,
+    shipping_charges: Number(order.shipping || 0),
+    giftwrap_charges: 0,
+    transaction_charges: 0,
+    total_discount: Number(order.discount || 0),
+    sub_total: Number(order.total || order.subtotal || 0),
+    length: SHIPROCKET_PACKAGE_LENGTH_CM,
+    breadth: SHIPROCKET_PACKAGE_BREADTH_CM,
+    height: SHIPROCKET_PACKAGE_HEIGHT_CM,
+    weight: Number(order.shipment?.packageWeightKg || SHIPROCKET_PACKAGE_WEIGHT_KG)
+  };
+}
+
+async function syncOrderToShiprocket(order) {
+  if (!shiprocketReady()) {
+    throw new Error("Shiprocket is not configured in Railway Variables.");
+  }
+  order.shiprocket = order.shiprocket || {};
+  order.shiprocket.externalOrderId = order.shiprocket.externalOrderId || `VS${Date.now()}`;
+  const token = await getShiprocketToken();
+  const payload = buildShiprocketPayload(order);
+  const response = await shiprocketRequest("/v1/external/orders/create/adhoc", payload, token);
+  order.shiprocket.externalOrderId = String(response.order_id || payload.order_id);
+  order.shiprocket.shipmentId = response.shipment_id || order.shiprocket.shipmentId || null;
+  order.shiprocket.awb = response.awb_code || order.shiprocket.awb || null;
+  order.shiprocket.courier = response.courier_name || order.shiprocket.courier || null;
+  order.shiprocket.statusCode = response.status_code || order.shiprocket.statusCode || null;
+  order.shiprocket.syncedAt = new Date().toISOString();
+  order.shiprocket.lastError = null;
+  order.shipmentStatus = response.awb_code
+    ? `Shiprocket synced - AWB ${response.awb_code}`
+    : `Shiprocket synced - ${response.status || "NEW"}`;
+  return response;
 }
 
 function makeId(prefix) {
@@ -391,9 +539,12 @@ function normalizeOrder(input) {
     shiprocket: {
       enabled: true,
       externalOrderId: null,
+      shipmentId: null,
       awb: null,
       courier: null,
-      trackingUrl: null
+      trackingUrl: null,
+      syncedAt: null,
+      lastError: null
     }
   };
 }
@@ -562,6 +713,14 @@ async function handleApi(req, res, url) {
       const product = products.find((item) => item.id === orderItem.id);
       if (product) product.stock = Math.max(0, Number(product.stock ?? 0) - orderItem.qty);
     });
+    if (shiprocketReady()) {
+      try {
+        await syncOrderToShiprocket(order);
+      } catch (error) {
+        order.shiprocket.lastError = error.message || "Shiprocket sync failed.";
+        order.shipmentStatus = `Shiprocket sync pending - ${order.shiprocket.lastError}`;
+      }
+    }
     orders.unshift(order);
     await writeJson(PRODUCTS_FILE, products);
     await writeJson(ORDERS_FILE, orders);
@@ -600,10 +759,17 @@ async function handleApi(req, res, url) {
     if (!requireAdmin(req, res)) return;
     const order = orders.find((item) => item.id === action);
     if (!order) return sendError(res, 404, "Order not found.");
-    order.shipmentStatus = "Shiprocket API placeholder";
-    order.shiprocket.externalOrderId = order.shiprocket.externalOrderId || `SR-${order.id.toUpperCase()}`;
-    await writeJson(ORDERS_FILE, orders);
-    sendJson(res, 200, order);
+    try {
+      const response = await syncOrderToShiprocket(order);
+      await writeJson(ORDERS_FILE, orders);
+      sendJson(res, 200, { order, shiprocket: response });
+    } catch (error) {
+      order.shiprocket = order.shiprocket || {};
+      order.shiprocket.lastError = error.message || "Shiprocket sync failed.";
+      order.shipmentStatus = `Shiprocket sync failed - ${order.shiprocket.lastError}`;
+      await writeJson(ORDERS_FILE, orders);
+      sendError(res, error.statusCode === 401 ? 401 : 500, order.shiprocket.lastError);
+    }
     return;
   }
 
