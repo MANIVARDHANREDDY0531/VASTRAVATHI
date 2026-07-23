@@ -28,6 +28,7 @@ const PORT = Number(process.env.PORT || 4180);
 const ADMIN_USER = process.env.ADMIN_USER || "MANIVARDHANREDDY";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "minnu9028";
 const ADMIN_SESSION = "vastravathi_admin";
+const PREPAID_DISCOUNT_RATE = 0.1;
 const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || "";
 const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || "";
 const BUNDLED_DATA_DIR = join(__dirname, "data");
@@ -348,6 +349,8 @@ function normalizeOrder(input) {
   const subtotal = Number(input.subtotal || calculatedSubtotal || 0);
   const requestedPaymentMode = input.payment?.mode || input.customer?.payment || "cod";
   const paymentMode = requestedPaymentMode === "prepaid" ? "prepaid" : "cod";
+  const discount = paymentMode === "prepaid" ? Math.round(subtotal * PREPAID_DISCOUNT_RATE) : 0;
+  const total = Math.max(0, subtotal - discount);
   const customer = input.customer || {};
   const payment = {
     mode: paymentMode,
@@ -375,8 +378,9 @@ function normalizeOrder(input) {
     },
     items,
     subtotal,
+    discount,
     shipping: 0,
-    total: subtotal,
+    total,
     payment,
     shipment: {
       provider: input.shipment?.provider || "Shiprocket",

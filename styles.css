@@ -1406,6 +1406,7 @@ dialog::backdrop {
 }
 
 .payment-options label {
+  position: relative;
   align-items: center;
   grid-template-columns: auto 1fr;
   min-height: 3.1rem;
@@ -1415,15 +1416,86 @@ dialog::backdrop {
   padding: 0.75rem;
 }
 
+.payment-options .preferred-payment {
+  border-color: rgba(152, 35, 66, 0.48);
+  background: linear-gradient(135deg, rgba(255, 246, 229, 0.98), rgba(255, 238, 243, 0.94));
+}
+
+.payment-options .preferred-payment::after {
+  position: absolute;
+  top: -0.65rem;
+  right: 0.75rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--wine), #3a0716);
+  color: #fff7e5;
+  content: "10% OFF";
+  font-size: 0.68rem;
+  font-weight: 900;
+  padding: 0.28rem 0.55rem;
+  box-shadow: 0 10px 26px rgba(56, 10, 24, 0.22);
+}
+
 .payment-options label:has(input:checked) {
   border-color: rgba(152, 35, 66, 0.55);
   background: rgba(255, 244, 230, 0.96);
   box-shadow: 0 12px 34px rgba(38, 8, 19, 0.08);
 }
 
+.payment-options strong em {
+  margin-left: 0.35rem;
+  border-radius: 999px;
+  background: rgba(152, 35, 66, 0.1);
+  color: var(--rose-dark);
+  font-family: inherit;
+  font-size: 0.68rem;
+  font-style: normal;
+  padding: 0.18rem 0.45rem;
+}
+
 .payment-options strong,
 .payment-options small {
   display: block;
+}
+
+.upi-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.32rem;
+  margin-top: 0.55rem;
+}
+
+.upi-badges b {
+  min-width: 2.65rem;
+  border: 1px solid rgba(152, 35, 66, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  color: #42101d;
+  font-size: 0.68rem;
+  font-weight: 900;
+  line-height: 1;
+  padding: 0.35rem 0.48rem;
+  text-align: center;
+  box-shadow: 0 8px 18px rgba(56, 10, 24, 0.08);
+}
+
+.upi-badges b:nth-child(1) {
+  color: #1a73e8;
+}
+
+.upi-badges b:nth-child(2) {
+  color: #6739b7;
+}
+
+.upi-badges b:nth-child(3) {
+  color: #00baf2;
+}
+
+.upi-badges b:nth-child(4) {
+  color: #138f52;
+}
+
+.upi-badges b:nth-child(5) {
+  color: #982342;
 }
 
 .payment-options small {
@@ -1607,6 +1679,16 @@ dialog::backdrop {
   color: var(--ink);
   padding-top: 0.8rem;
   font-size: 1.15rem;
+}
+
+.summary-lines .discount-line {
+  color: #197448;
+  font-weight: 900;
+}
+
+.summary-lines .discount-line.inactive {
+  color: var(--muted);
+  opacity: 0.55;
 }
 
 .reveal {

@@ -116,6 +116,7 @@ const rupees = new Intl.NumberFormat("en-IN", {
   currency: "INR",
   maximumFractionDigits: 0
 });
+const PREPAID_DISCOUNT_RATE = 0.1;
 
 const grid = document.querySelector("[data-product-grid]");
 const cartDrawer = document.querySelector("[data-cart-drawer]");
@@ -476,9 +477,13 @@ function openProductDetail(id) {
 function renderCheckout() {
   const items = document.querySelector("[data-checkout-items]");
   const subtotal = state.cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const paymentMode = document.querySelector("[data-checkout-form] input[name='payment']:checked")?.value || "prepaid";
+  const totals = calculateCheckoutTotals(paymentMode, subtotal);
 
   document.querySelector("[data-checkout-subtotal]").textContent = rupees.format(subtotal);
-  document.querySelector("[data-checkout-total]").textContent = rupees.format(subtotal);
+  document.querySelector("[data-checkout-discount]").textContent = `-${rupees.format(totals.discount)}`;
+  document.querySelector("[data-prepaid-discount-line]").classList.toggle("inactive", totals.discount <= 0);
+  document.querySelector("[data-checkout-total]").textContent = rupees.format(totals.total);
 
   if (!state.cart.length) {
     items.innerHTML = '<p class="empty-state">Your cart is empty. Add a saree before checkout.</p>';
@@ -497,13 +502,24 @@ function renderCheckout() {
   `).join("");
 }
 
+function calculateCheckoutTotals(paymentMode, subtotalValue) {
+  const subtotal = Number(subtotalValue ?? state.cart.reduce((sum, item) => sum + item.price * item.qty, 0));
+  const discount = paymentMode === "prepaid" ? Math.round(subtotal * PREPAID_DISCOUNT_RATE) : 0;
+  return {
+    subtotal,
+    discount,
+    total: Math.max(0, subtotal - discount)
+  };
+}
+
 function syncPaymentUi() {
-  const paymentMode = document.querySelector("[data-checkout-form] input[name='payment']:checked")?.value || "cod";
+  const paymentMode = document.querySelector("[data-checkout-form] input[name='payment']:checked")?.value || "prepaid";
   const isCod = paymentMode === "cod";
   paymentNote.textContent = isCod
-    ? "COD selected: your order will be saved for Shiprocket delivery and payment collection."
-    : "Prepaid selected: your order will be saved for Razorpay payment, then prepared for Shiprocket delivery.";
-  submitOrder.textContent = isCod ? "Place COD Order" : "Continue to Razorpay";
+    ? "COD selected: delivery payment is available, but the 10% prepaid discount will not apply."
+    : "Prepaid selected: 10% off is applied now, then your order is prepared for Shiprocket delivery.";
+  submitOrder.textContent = isCod ? "Place COD Order" : "Pay Prepaid and Save 10%";
+  renderCheckout();
 }
 
 function openCheckout() {
@@ -552,7 +568,7 @@ function fetchWithTimeout(url, options = {}, timeoutMs = 20000) {
 }
 
 async function createRazorpayOrder(order) {
-  const amount = Math.max(100, Math.round(Number(order.subtotal || 0) * 100));
+  const amount = Math.max(100, Math.round(Number(order.total || order.subtotal || 0) * 100));
   const response = await fetchWithTimeout(`${apiBase}/api/create-order`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -760,6 +776,8 @@ document.querySelector("[data-checkout-form]").addEventListener("submit", async 
   const customer = Object.fromEntries(formData.entries());
   const selectedPayment = checkoutForm.querySelector("input[name='payment']:checked")?.value;
   const paymentMode = selectedPayment === "prepaid" ? "prepaid" : "cod";
+  const subtotal = state.cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const totals = calculateCheckoutTotals(paymentMode, subtotal);
   delete customer.payment;
   const order = {
     customer,
@@ -773,7 +791,9 @@ document.querySelector("[data-checkout-form]").addEventListener("submit", async 
       fabric: item.fabric,
       color: item.color
     })),
-    subtotal: state.cart.reduce((sum, item) => sum + item.price * item.qty, 0),
+    subtotal: totals.subtotal,
+    discount: totals.discount,
+    total: totals.total,
     payment: {
       mode: paymentMode,
       collector: paymentMode === "cod" ? "Shiprocket" : "Razorpay",

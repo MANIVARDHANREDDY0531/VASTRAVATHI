@@ -323,17 +323,18 @@
           <label class="span-2">Delivery note<textarea name="note" placeholder="Any delivery instruction"></textarea></label>
         </div>
         <div class="payment-options" aria-label="Payment option">
-          <label><input type="radio" name="payment" value="cod" checked /> <span><strong>Cash on Delivery</strong><small>Shiprocket collects payment at delivery.</small></span></label>
-          <label><input type="radio" name="payment" value="prepaid" /> <span><strong>Prepaid</strong><small>Razorpay payment before dispatch.</small></span></label>
+          <label class="preferred-payment"><input type="radio" name="payment" value="prepaid" checked /> <span><strong>Prepaid <em>Best value</em></strong><small>Pay securely using UPI apps, cards, or netbanking and get 10% off on every order. No minimum order value.</small><span class="upi-badges" aria-label="Supported online payment options"><b>GPay</b><b>PhonePe</b><b>Paytm</b><b>UPI</b><b>Cards</b></span></span></label>
+          <label><input type="radio" name="payment" value="cod" /> <span><strong>Cash on Delivery</strong><small>Shiprocket collects payment at delivery. No prepaid discount.</small></span></label>
         </div>
-        <p class="checkout-note" data-payment-note>COD selected: your order will be saved for Shiprocket delivery and payment collection.</p>
-        <button class="primary-btn full" type="submit" data-submit-order>Place COD Order</button>
+        <p class="checkout-note" data-payment-note>Prepaid selected: 10% off is applied now, then your order is prepared for Shiprocket delivery.</p>
+        <button class="primary-btn full" type="submit" data-submit-order>Pay Prepaid and Save 10%</button>
       </div>
       <aside class="checkout-summary">
         <p class="eyebrow">Shiprocket order summary</p>
         <div data-checkout-items></div>
         <div class="summary-lines">
           <div><span>Subtotal</span><strong data-checkout-subtotal>&#8377;0</strong></div>
+          <div class="discount-line" data-prepaid-discount-line><span>Prepaid 10% off</span><strong data-checkout-discount>-&#8377;0</strong></div>
           <div><span>Shipping</span><strong>Free</strong></div>
           <div><span>Total</span><strong data-checkout-total>&#8377;0</strong></div>
         </div>
