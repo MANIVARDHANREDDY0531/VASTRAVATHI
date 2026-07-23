@@ -551,7 +551,7 @@ async function createRazorpayOrder(order) {
   });
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new Error(body.error || "Razorpay order could not be created");
+    throw new Error(body.error || `Razorpay order could not be created (${response.status})`);
   }
   return response.json();
 }
@@ -569,12 +569,35 @@ async function verifyRazorpayPayment(payment) {
   return response.json();
 }
 
-function openRazorpayCheckout(order) {
-  if (!window.Razorpay) {
-    return Promise.reject(new Error("Razorpay checkout could not load. Please refresh and try again."));
+function loadRazorpayCheckoutScript() {
+  if (window.Razorpay) return Promise.resolve();
+
+  const existingScript = document.querySelector("script[data-razorpay-checkout]");
+  if (existingScript) {
+    return new Promise((resolve, reject) => {
+      existingScript.addEventListener("load", resolve, { once: true });
+      existingScript.addEventListener("error", () => {
+        reject(new Error("Razorpay checkout could not load. Please check internet and try again."));
+      }, { once: true });
+    });
   }
 
-  return createRazorpayOrder(order).then((razorpayOrder) => new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.dataset.razorpayCheckout = "true";
+    script.onload = resolve;
+    script.onerror = () => reject(new Error("Razorpay checkout could not load. Please check internet and try again."));
+    document.head.appendChild(script);
+  });
+}
+
+async function openRazorpayCheckout(order) {
+  await loadRazorpayCheckoutScript();
+  const razorpayOrder = await createRazorpayOrder(order);
+
+  return new Promise((resolve, reject) => {
     const checkout = new window.Razorpay({
       key: razorpayOrder.key_id,
       amount: razorpayOrder.amount,
@@ -612,7 +635,7 @@ function openRazorpayCheckout(order) {
     });
 
     checkout.open();
-  }));
+  });
 }
 
 function showOrderSuccess(order) {
