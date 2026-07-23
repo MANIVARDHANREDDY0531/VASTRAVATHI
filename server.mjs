@@ -290,6 +290,9 @@ function razorpayRequest(path, payload) {
         reject(error);
       });
     });
+    request.setTimeout(20000, () => {
+      request.destroy(new Error("Razorpay is taking too long to respond. Please try again."));
+    });
     request.on("error", reject);
     request.write(body);
     request.end();

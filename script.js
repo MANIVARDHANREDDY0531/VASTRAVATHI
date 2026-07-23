@@ -538,9 +538,22 @@ function createOrder(order) {
   });
 }
 
+function fetchWithTimeout(url, options = {}, timeoutMs = 20000) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal })
+    .catch((error) => {
+      if (error.name === "AbortError") {
+        throw new Error("Payment service is taking too long. Please try again.");
+      }
+      throw error;
+    })
+    .finally(() => window.clearTimeout(timeout));
+}
+
 async function createRazorpayOrder(order) {
   const amount = Math.max(100, Math.round(Number(order.subtotal || 0) * 100));
-  const response = await fetch(`${apiBase}/api/create-order`, {
+  const response = await fetchWithTimeout(`${apiBase}/api/create-order`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -557,7 +570,7 @@ async function createRazorpayOrder(order) {
 }
 
 async function verifyRazorpayPayment(payment) {
-  const response = await fetch(`${apiBase}/api/verify-payment`, {
+  const response = await fetchWithTimeout(`${apiBase}/api/verify-payment`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payment)
