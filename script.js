@@ -1,4 +1,4 @@
-let products = [
+﻿let products = [
   {
     "id": "saree_mrrvow43_wfhk39",
     "name": "Rani Pink & Mehendi Green Kanchi Pattu Saree",
@@ -188,6 +188,39 @@ function mainImage(product) {
   return productImages(product)[0] || "vastravathi-logo.svg";
 }
 
+function hydrateEditorialImages() {
+  const imagePool = products
+    .flatMap((product) => productImages(product))
+    .filter(Boolean);
+
+  document.querySelectorAll("[data-editorial-image]").forEach((image, index) => {
+    if (!imagePool.length) {
+      image.classList.add("editorial-fallback");
+      image.removeAttribute("src");
+      return;
+    }
+
+    let attempt = 0;
+    const baseIndex = Number(image.dataset.editorialImage || index);
+    const applyImage = () => {
+      image.classList.remove("editorial-fallback");
+      image.src = imagePool[(baseIndex + attempt) % imagePool.length];
+    };
+
+    image.onerror = () => {
+      attempt += 1;
+      if (attempt < imagePool.length) {
+        applyImage();
+        return;
+      }
+      image.classList.add("editorial-fallback");
+      image.removeAttribute("src");
+    };
+
+    applyImage();
+  });
+}
+
 function isInStock(product) {
   return Number(product?.stock ?? 1) > 0;
 }
@@ -285,7 +318,7 @@ function renderWishlist() {
       <img src="${mainImage(item)}" alt="${item.name}" />
       <div>
         <h4>${item.name}</h4>
-        <span>${rupees.format(item.price)} � ${stockLabel(item)}</span>
+        <span>${rupees.format(item.price)} ï¿½ ${stockLabel(item)}</span>
       </div>
       <button class="icon-btn" type="button" data-add="${item.id}" aria-label="Add ${item.name} to cart" ${isInStock(item) ? "" : "disabled"}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h15l-1.5 9h-12z"></path><path d="M6 6 5 3H2"></path></svg>
@@ -342,6 +375,7 @@ function toggleWishlist(id) {
   } else {
     state.wishlist.add(id);
   }
+  hydrateEditorialImages();
   renderProducts();
   renderWishlist();
 }
@@ -538,7 +572,7 @@ function renderSearch(query = "") {
       <img src="${mainImage(product)}" alt="${product.name}" />
       <div>
         <strong>${product.name}</strong>
-        <div>${rupees.format(product.price)} � ${stockLabel(product)}</div>
+        <div>${rupees.format(product.price)} ï¿½ ${stockLabel(product)}</div>
       </div>
       <button class="primary-btn" type="button" data-add="${product.id}" ${isInStock(product) ? "" : "disabled"}>${isInStock(product) ? "Add" : "Sold Out"}</button>
     </div>
@@ -567,7 +601,8 @@ document.addEventListener("click", (event) => {
     document.querySelectorAll("[data-filter]").forEach((button) => {
       button.classList.toggle("active", button.dataset.filter === state.filter);
     });
-    renderProducts();
+    hydrateEditorialImages();
+  renderProducts();
   }
 
   if (event.target.closest("[data-open-cart]")) openPanel(cartDrawer);
@@ -589,6 +624,7 @@ document.addEventListener("click", (event) => {
 
 document.querySelector("[data-sort]").addEventListener("change", (event) => {
   state.sort = event.target.value;
+  hydrateEditorialImages();
   renderProducts();
 });
 
@@ -681,10 +717,13 @@ async function initStorefront() {
     showToast("Using saved products");
   }
 
+  hydrateEditorialImages();
   renderProducts();
   renderCart();
   renderWishlist();
 }
 
 initStorefront();
+
+
 

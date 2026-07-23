@@ -2129,3 +2129,21 @@ dialog::backdrop {
       url("uploads/saree_photo_mrrvz7fq_9m05ew.jpg") center / cover no-repeat;
   }
 }
+
+/* Live product photo hydration */
+[data-editorial-image] {
+  background:
+    radial-gradient(circle at 20% 18%, rgba(246, 223, 154, 0.28), transparent 12rem),
+    linear-gradient(135deg, #240b12, #7a2638 58%, #f1d98d);
+}
+
+[data-editorial-image].editorial-fallback {
+  opacity: 0.92;
+}
+
+.hero-media [data-editorial-image].editorial-fallback,
+.craft-image [data-editorial-image].editorial-fallback,
+.edit-card [data-editorial-image].editorial-fallback,
+.saree-panel [data-editorial-image].editorial-fallback {
+  min-height: 100%;
+}
