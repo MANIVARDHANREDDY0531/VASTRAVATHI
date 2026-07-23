@@ -790,6 +790,8 @@ document.querySelector("[data-checkout-form]").addEventListener("submit", async 
     submitOrder.disabled = true;
     submitOrder.textContent = paymentMode === "prepaid" ? "Opening Razorpay..." : "Saving order...";
     if (paymentMode === "prepaid") {
+      if (checkoutModal.open) checkoutModal.close();
+      showToast("Opening secure Razorpay payment");
       const payment = await openRazorpayCheckout(order);
       order.payment.razorpayOrderId = payment.razorpay_order_id;
       order.payment.razorpayPaymentId = payment.razorpay_payment_id;
@@ -806,6 +808,7 @@ document.querySelector("[data-checkout-form]").addEventListener("submit", async 
     showOrderSuccess(savedOrder);
     showToast(savedOrder.payment?.mode === "prepaid" ? "Prepaid order saved for Razorpay" : "COD order saved for Shiprocket");
   } catch (error) {
+    if (paymentMode === "prepaid" && !checkoutModal.open) checkoutModal.showModal();
     showToast(error.message || "Order could not be saved");
   } finally {
     submitOrder.disabled = false;
