@@ -176,7 +176,8 @@ img {
 }
 
 .icon-btn,
-.cart-button {
+.cart-button,
+.search-nav-btn {
   display: inline-grid;
   position: relative;
   min-width: 2.7rem;
@@ -191,7 +192,8 @@ img {
 }
 
 .icon-btn:hover,
-.cart-button:hover {
+.cart-button:hover,
+.search-nav-btn:hover {
   transform: translateY(-2px);
   border-color: rgba(168, 63, 85, 0.42);
   background: white;
@@ -211,6 +213,16 @@ svg {
   display: inline-flex;
   gap: 0.5rem;
   padding: 0 1rem;
+}
+
+.search-nav-btn {
+  display: inline-flex;
+  gap: 0.55rem;
+  min-width: 11rem;
+  justify-content: flex-start;
+  padding: 0 1rem;
+  color: #6f625d;
+  font-weight: 800;
 }
 
 .count,
@@ -982,12 +994,13 @@ svg {
 .newsletter input,
 .search-box input {
   width: 100%;
-  min-height: 3.15rem;
+  min-height: 3.6rem;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: white;
   color: var(--ink);
-  padding: 0 1.1rem;
+  padding: 0 1.25rem;
+  font-size: 1rem;
   outline: none;
 }
 
@@ -1196,7 +1209,7 @@ dialog::backdrop {
 }
 
 .search-modal {
-  width: min(720px, calc(100% - 2rem));
+  width: min(920px, calc(100% - 2rem));
 }
 
 .search-box {
@@ -1833,9 +1846,15 @@ dialog::backdrop {
   }
 
   .icon-btn,
-  .cart-button {
+  .cart-button,
+  .search-nav-btn {
     min-width: 2.75rem;
     min-height: 2.75rem;
+  }
+
+  .search-nav-btn {
+    flex: 1 1 9rem;
+    min-width: min(11rem, 48vw);
   }
 
   .cart-button {

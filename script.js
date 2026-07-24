@@ -236,9 +236,9 @@ function renderProducts() {
   if (!visibleProducts().length) {
     grid.innerHTML = `
       <div class="product-empty-state">
-        <p class="eyebrow">No products</p>
-        <h3>No sarees added yet</h3>
-        <p>Add products from the admin dashboard and refresh this page.</p>
+        <p class="eyebrow">Coming soon</p>
+        <h3>Sarees will be available shortly</h3>
+        <p>Please check again soon or message us on WhatsApp for current availability.</p>
       </div>
     `;
     return;
@@ -279,7 +279,8 @@ function renderCart() {
   const subtotal = state.cart.reduce((sum, item) => sum + item.price * item.qty, 0);
   const itemCount = state.cart.reduce((sum, item) => sum + item.qty, 0);
 
-  document.querySelector("[data-cart-count]").textContent = itemCount;
+  const cartCount = document.querySelector("[data-cart-count]");
+  if (cartCount) cartCount.textContent = itemCount;
   document.querySelector("[data-cart-title]").textContent = `${itemCount} ${itemCount === 1 ? "item" : "items"}`;
   document.querySelector("[data-subtotal]").textContent = rupees.format(subtotal);
 
@@ -319,7 +320,7 @@ function renderWishlist() {
       <img src="${mainImage(item)}" alt="${item.name}" />
       <div>
         <h4>${item.name}</h4>
-        <span>${rupees.format(item.price)} ï¿½ ${stockLabel(item)}</span>
+        <span>${rupees.format(item.price)} • ${stockLabel(item)}</span>
       </div>
       <button class="icon-btn" type="button" data-add="${item.id}" aria-label="Add ${item.name} to cart" ${isInStock(item) ? "" : "disabled"}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h15l-1.5 9h-12z"></path><path d="M6 6 5 3H2"></path></svg>
@@ -401,6 +402,15 @@ function showToast(message) {
   toast.classList.add("active");
   window.clearTimeout(showToast.timer);
   showToast.timer = window.setTimeout(() => toast.classList.remove("active"), 1800);
+}
+
+function customerErrorMessage(error, paymentMode) {
+  const message = String(error?.message || "");
+  if (/cancelled/i.test(message)) return "Payment was cancelled.";
+  if (/payment|razorpay/i.test(message)) return "Payment could not be completed. Please try again.";
+  if (/shiprocket|delivery partner/i.test(message)) return "Order was saved. Delivery confirmation may take a little longer.";
+  if (paymentMode === "prepaid") return "Online payment could not be completed. Please try again.";
+  return message || "Order could not be placed. Please try again.";
 }
 
 function openQuickView(id) {
@@ -516,9 +526,9 @@ function syncPaymentUi() {
   const paymentMode = document.querySelector("[data-checkout-form] input[name='payment']:checked")?.value || "prepaid";
   const isCod = paymentMode === "cod";
   paymentNote.textContent = isCod
-    ? "COD selected: delivery payment is available, but the 10% prepaid discount will not apply."
-    : "Prepaid selected: 10% off is applied now, then your order is prepared for Shiprocket delivery.";
-  submitOrder.textContent = isCod ? "Place COD Order" : "Pay Prepaid and Save 10%";
+    ? "Cash on Delivery selected: pay when your saree is delivered. The 10% online payment discount will not apply."
+    : "Online payment selected: 10% off is applied to this order.";
+  submitOrder.textContent = isCod ? "Place COD Order" : "Pay Online and Save 10%";
   renderCheckout();
 }
 
@@ -534,10 +544,9 @@ function openCheckout() {
 }
 
 function createOrder(order) {
-  // COD route: Shiprocket collects payment. Prepaid route: Razorpay payment first, then Shiprocket shipment.
   if (!apiEnabled) {
     console.info("Order payload", order);
-    showToast(order.payment.mode === "cod" ? "Shiprocket COD order ready" : "Razorpay payment order ready");
+    showToast(order.payment.mode === "cod" ? "COD order ready" : "Online payment order ready");
     return Promise.resolve({ localOnly: true });
   }
 
@@ -580,7 +589,7 @@ async function createRazorpayOrder(order) {
   });
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new Error(body.error || `Razorpay order could not be created (${response.status})`);
+    throw new Error(body.error || "Online payment could not start. Please try again.");
   }
   return response.json();
 }
@@ -593,7 +602,7 @@ async function verifyRazorpayPayment(payment) {
   });
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new Error(body.error || "Razorpay payment verification failed");
+    throw new Error(body.error || "Payment could not be verified. Please contact us if money was deducted.");
   }
   return response.json();
 }
@@ -606,7 +615,7 @@ function loadRazorpayCheckoutScript() {
     return new Promise((resolve, reject) => {
       existingScript.addEventListener("load", resolve, { once: true });
       existingScript.addEventListener("error", () => {
-        reject(new Error("Razorpay checkout could not load. Please check internet and try again."));
+        reject(new Error("Online payment could not load. Please check internet and try again."));
       }, { once: true });
     });
   }
@@ -617,7 +626,7 @@ function loadRazorpayCheckoutScript() {
     script.async = true;
     script.dataset.razorpayCheckout = "true";
     script.onload = resolve;
-    script.onerror = () => reject(new Error("Razorpay checkout could not load. Please check internet and try again."));
+    script.onerror = () => reject(new Error("Online payment could not load. Please check internet and try again."));
     document.head.appendChild(script);
   });
 }
@@ -632,7 +641,7 @@ async function openRazorpayCheckout(order) {
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
       name: "Vastravathi",
-      description: "Prepaid saree order",
+      description: "Vastravathi saree order",
       order_id: razorpayOrder.order_id,
       prefill: {
         name: order.customer.name,
@@ -641,7 +650,7 @@ async function openRazorpayCheckout(order) {
       },
       notes: {
         brand: "Vastravathi",
-        shipping_provider: "Shiprocket"
+        order_type: order.payment?.mode || "online"
       },
       theme: {
         color: "#982342"
@@ -660,7 +669,7 @@ async function openRazorpayCheckout(order) {
     });
 
     checkout.on("payment.failed", (response) => {
-      reject(new Error(response.error?.description || "Razorpay payment failed"));
+      reject(new Error(response.error?.description || "Payment failed. Please try again."));
     });
 
     checkout.open();
@@ -669,10 +678,10 @@ async function openRazorpayCheckout(order) {
 
 function showOrderSuccess(order) {
   const isCod = order.payment?.mode === "cod";
-  document.querySelector("[data-success-title]").textContent = isCod ? "COD order placed" : "Prepaid order created";
+  document.querySelector("[data-success-title]").textContent = isCod ? "COD order placed" : "Order confirmed";
   document.querySelector("[data-success-message]").textContent = isCod
-    ? "We saved the order for Shiprocket. Payment will be collected during delivery."
-    : "We saved the order for Razorpay payment. After payment, it can be dispatched with Shiprocket.";
+    ? "Your order is confirmed. Please keep the payment ready at delivery."
+    : "Your online paid order is confirmed. We will prepare it for delivery.";
   document.querySelector("[data-success-id]").textContent = `Order ID: ${order.id || "Saved"}`;
   orderSuccess.showModal();
 }
@@ -701,7 +710,7 @@ function renderSearch(query = "") {
       <img src="${mainImage(product)}" alt="${product.name}" />
       <div>
         <strong>${product.name}</strong>
-        <div>${rupees.format(product.price)} ï¿½ ${stockLabel(product)}</div>
+        <div>${rupees.format(product.price)} • ${stockLabel(product)}</div>
       </div>
       <button class="primary-btn" type="button" data-add="${product.id}" ${isInStock(product) ? "" : "disabled"}>${isInStock(product) ? "Add" : "Sold Out"}</button>
     </div>
@@ -773,12 +782,6 @@ document.querySelector("[data-checkout-form]").addEventListener("change", (event
   if (event.target.name === "payment") syncPaymentUi();
 });
 
-document.querySelector(".newsletter form").addEventListener("submit", (event) => {
-  event.preventDefault();
-  event.currentTarget.reset();
-  showToast("You are on the Vastravathi list");
-});
-
 document.querySelector("[data-checkout-form]").addEventListener("submit", async (event) => {
   event.preventDefault();
   const checkoutForm = event.currentTarget;
@@ -806,11 +809,11 @@ document.querySelector("[data-checkout-form]").addEventListener("submit", async 
     total: totals.total,
     payment: {
       mode: paymentMode,
-      collector: paymentMode === "cod" ? "Shiprocket" : "Razorpay",
-      status: paymentMode === "cod" ? "COD Pending" : "Razorpay Pending"
+      collector: paymentMode === "cod" ? "Delivery" : "Online Payment",
+      status: paymentMode === "cod" ? "Payment on Delivery" : "Payment Pending"
     },
     shipment: {
-      provider: "Shiprocket",
+      provider: "Delivery Partner",
       packageWeightKg: 0.5,
       pickupType: "Store pickup",
       cod: paymentMode === "cod"
@@ -818,10 +821,10 @@ document.querySelector("[data-checkout-form]").addEventListener("submit", async 
   };
   try {
     submitOrder.disabled = true;
-    submitOrder.textContent = paymentMode === "prepaid" ? "Opening Razorpay..." : "Saving order...";
+    submitOrder.textContent = paymentMode === "prepaid" ? "Opening secure payment..." : "Saving order...";
     if (paymentMode === "prepaid") {
       if (checkoutModal.open) checkoutModal.close();
-      showToast("Opening secure Razorpay payment");
+      showToast("Opening secure online payment");
       const payment = await openRazorpayCheckout(order);
       order.payment.razorpayOrderId = payment.razorpay_order_id;
       order.payment.razorpayPaymentId = payment.razorpay_payment_id;
@@ -836,10 +839,10 @@ document.querySelector("[data-checkout-form]").addEventListener("submit", async 
     checkoutForm.reset();
     syncPaymentUi();
     showOrderSuccess(savedOrder);
-    showToast(savedOrder.payment?.mode === "prepaid" ? "Prepaid order saved for Razorpay" : "COD order saved for Shiprocket");
+    showToast(savedOrder.payment?.mode === "prepaid" ? "Order confirmed" : "COD order placed");
   } catch (error) {
     if (paymentMode === "prepaid" && !checkoutModal.open) checkoutModal.showModal();
-    showToast(error.message || "Order could not be saved");
+    showToast(customerErrorMessage(error, paymentMode));
   } finally {
     submitOrder.disabled = false;
     syncPaymentUi();
