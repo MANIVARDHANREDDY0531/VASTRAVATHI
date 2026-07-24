@@ -177,7 +177,8 @@ img {
 
 .icon-btn,
 .cart-button,
-.search-nav-btn {
+.search-nav-btn,
+.account-button {
   display: inline-grid;
   position: relative;
   min-width: 2.7rem;
@@ -193,7 +194,8 @@ img {
 
 .icon-btn:hover,
 .cart-button:hover,
-.search-nav-btn:hover {
+.search-nav-btn:hover,
+.account-button:hover {
   transform: translateY(-2px);
   border-color: rgba(168, 63, 85, 0.42);
   background: white;
@@ -209,10 +211,17 @@ svg {
   stroke-width: 1.8;
 }
 
-.cart-button {
+.cart-button,
+.account-button {
   display: inline-flex;
   gap: 0.5rem;
   padding: 0 1rem;
+}
+
+.account-button {
+  background: linear-gradient(135deg, rgba(152, 35, 66, 0.96), rgba(38, 8, 19, 0.96));
+  color: #fff8ec;
+  box-shadow: 0 16px 38px rgba(38, 8, 19, 0.18);
 }
 
 .search-nav-btn {
@@ -1102,6 +1111,56 @@ svg {
   justify-content: space-between;
 }
 
+.account-body {
+  gap: 1rem;
+}
+
+.account-profile {
+  display: grid;
+  gap: 0.5rem;
+  border: 1px solid rgba(217, 164, 65, 0.28);
+  border-radius: 8px;
+  background: rgba(255, 250, 241, 0.78);
+  padding: 0.9rem;
+}
+
+.account-profile strong,
+.account-order strong {
+  color: var(--ink);
+}
+
+.account-orders {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.account-order {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 0.75rem;
+  border: 1px solid rgba(217, 164, 65, 0.28);
+  border-radius: 8px;
+  background: white;
+  padding: 0.75rem;
+}
+
+.account-order img {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.account-order p,
+.account-order span {
+  margin: 0;
+  color: var(--muted);
+}
+
+.account-actions {
+  display: grid;
+  gap: 0.55rem;
+}
+
 .cart-line {
   display: grid;
   grid-template-columns: 72px 1fr auto;
@@ -1288,7 +1347,8 @@ dialog::backdrop {
 }
 
 .product-detail-modal,
-.checkout-modal {
+.checkout-modal,
+.customer-auth-modal {
   width: min(1120px, calc(100% - 2rem));
   border-radius: 8px;
   background:
@@ -1358,6 +1418,60 @@ dialog::backdrop {
 
 .checkout-modal {
   width: min(1040px, calc(100% - 2rem));
+}
+
+.customer-auth-modal {
+  width: min(520px, calc(100% - 2rem));
+}
+
+.customer-auth-card {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.25rem;
+}
+
+.customer-auth-card h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 7vw, 3.2rem);
+  line-height: 1;
+}
+
+.customer-auth-card p:not(.eyebrow) {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.customer-auth-card form {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.customer-auth-card label {
+  display: grid;
+  gap: 0.35rem;
+  color: #4e3834;
+  font-weight: 800;
+}
+
+.customer-auth-card label span {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.customer-auth-card input {
+  min-height: 3rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--ink);
+  padding: 0 0.9rem;
+  outline: none;
+}
+
+.customer-auth-card input:focus {
+  border-color: var(--rose);
+  box-shadow: 0 0 0 4px rgba(168, 63, 85, 0.12);
 }
 
 .checkout-layout {
@@ -1825,7 +1939,8 @@ dialog::backdrop {
     height: 2rem;
   }
 
-  .cart-button span {
+  .cart-button span,
+  .account-button span {
     display: none;
   }
 
@@ -1847,7 +1962,8 @@ dialog::backdrop {
 
   .icon-btn,
   .cart-button,
-  .search-nav-btn {
+  .search-nav-btn,
+  .account-button {
     min-width: 2.75rem;
     min-height: 2.75rem;
   }

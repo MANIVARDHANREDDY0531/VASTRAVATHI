@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { request as httpsRequest } from "node:https";
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, randomInt, timingSafeEqual } from "node:crypto";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { createReadStream, existsSync, readFileSync } from "node:fs";
 import { dirname, extname, join, normalize, resolve } from "node:path";
@@ -28,6 +28,9 @@ const PORT = Number(process.env.PORT || 4180);
 const ADMIN_USER = process.env.ADMIN_USER || "MANIVARDHANREDDY";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "minnu9028";
 const ADMIN_SESSION = "vastravathi_admin";
+const CUSTOMER_SESSION = "vastravathi_customer";
+const CUSTOMER_SESSION_SECRET = process.env.CUSTOMER_SESSION_SECRET || process.env.RAZORPAY_KEY_SECRET || ADMIN_PASSWORD;
+const CUSTOMER_OTP_DELIVERY = process.env.CUSTOMER_OTP_DELIVERY || "display";
 const PREPAID_DISCOUNT_RATE = 0.1;
 const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || "";
 const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || "";
@@ -47,7 +50,9 @@ const DATA_DIR = process.env.VASTRAVATHI_DATA_DIR || BUNDLED_DATA_DIR;
 const UPLOADS_DIR = process.env.VASTRAVATHI_UPLOADS_DIR || join(DATA_DIR, "uploads");
 const PRODUCTS_FILE = join(DATA_DIR, "products.json");
 const ORDERS_FILE = join(DATA_DIR, "orders.json");
+const CUSTOMERS_FILE = join(DATA_DIR, "customers.json");
 const BUNDLED_PRODUCTS_FILE = join(BUNDLED_DATA_DIR, "products.json");
+const customerOtps = new Map();
 
 const DEFAULT_PRODUCTS = [
   {
@@ -185,6 +190,7 @@ async function ensureData() {
     await writeJson(PRODUCTS_FILE, seedProducts);
   }
   if (!existsSync(ORDERS_FILE)) await writeJson(ORDERS_FILE, []);
+  if (!existsSync(CUSTOMERS_FILE)) await writeJson(CUSTOMERS_FILE, []);
 
   const currentProducts = await readJson(PRODUCTS_FILE, []);
   const bundledProducts = await readJson(BUNDLED_PRODUCTS_FILE, DEFAULT_PRODUCTS);
@@ -239,6 +245,58 @@ function requireAdmin(req, res) {
   if (isAdmin(req)) return true;
   sendError(res, 401, "Admin login required.");
   return false;
+}
+
+function normalizePhone(phone) {
+  const digits = String(phone || "").replace(/\D/g, "");
+  const lastTen = digits.slice(-10);
+  return lastTen.length === 10 ? `+91${lastTen}` : "";
+}
+
+function makeOtp() {
+  return String(randomInt(100000, 1000000));
+}
+
+function customerSessionValue(phone) {
+  const payload = Buffer.from(JSON.stringify({ phone, iat: Date.now() })).toString("base64url");
+  const signature = createHmac("sha256", CUSTOMER_SESSION_SECRET).update(payload).digest("base64url");
+  return `${payload}.${signature}`;
+}
+
+function readCustomerSession(req) {
+  const value = parseCookies(req)[CUSTOMER_SESSION];
+  if (!value || !value.includes(".")) return null;
+  const [payload, signature] = value.split(".");
+  const expected = createHmac("sha256", CUSTOMER_SESSION_SECRET).update(payload).digest("base64url");
+  const expectedBuffer = Buffer.from(expected);
+  const actualBuffer = Buffer.from(signature || "");
+  if (expectedBuffer.length !== actualBuffer.length || !timingSafeEqual(expectedBuffer, actualBuffer)) return null;
+  try {
+    const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+    return data.phone ? data : null;
+  } catch {
+    return null;
+  }
+}
+
+function customerSafeOrder(order) {
+  return {
+    id: order.id,
+    status: order.status || "Pending",
+    shipmentStatus: order.shiprocket?.awb ? "Shipped" : order.status || "Preparing",
+    createdAt: order.createdAt,
+    total: order.total || order.subtotal || 0,
+    paymentMode: order.payment?.mode === "cod" ? "Cash on Delivery" : "Online Payment",
+    paymentStatus: order.payment?.mode === "cod" ? "Pay on delivery" : "Paid",
+    items: Array.isArray(order.items)
+      ? order.items.map((item) => ({
+        name: item.name,
+        qty: item.qty || 1,
+        image: item.image || "",
+        price: item.price || 0
+      }))
+      : []
+  };
 }
 
 function redirectToLogin(res) {
@@ -518,7 +576,7 @@ function normalizeOrder(input) {
     createdAt: new Date().toISOString(),
     customer: {
       name: String(customer.name || "").trim(),
-      phone: String(customer.phone || "").trim(),
+      phone: normalizePhone(customer.phone) || String(customer.phone || "").trim(),
       email: String(customer.email || "").trim(),
       address: String(customer.address || "").trim(),
       landmark: String(customer.landmark || "").trim(),
@@ -555,10 +613,93 @@ function normalizeOrder(input) {
 async function handleApi(req, res, url) {
   const products = await readJson(PRODUCTS_FILE, DEFAULT_PRODUCTS);
   const orders = await readJson(ORDERS_FILE, []);
+  const customers = await readJson(CUSTOMERS_FILE, []);
   const [resource, id, action] = url.pathname.replace(/^\/api\//, "").split("/");
 
   if (url.pathname === "/api/health") {
     sendJson(res, 200, { ok: true, app: "Vastravathi backend" });
+    return;
+  }
+
+  if (url.pathname === "/api/customer/request-otp" && req.method === "POST") {
+    const body = await readBody(req);
+    const phone = normalizePhone(body.phone);
+    if (!phone) return sendError(res, 400, "Enter a valid 10 digit mobile number.");
+    const otp = makeOtp();
+    customerOtps.set(phone, {
+      otp,
+      expiresAt: Date.now() + 5 * 60 * 1000,
+      attempts: 0,
+      name: String(body.name || "").trim()
+    });
+    console.info(`Vastravathi customer OTP for ${phone}: ${otp}`);
+    sendJson(res, 200, {
+      ok: true,
+      phone,
+      expiresInSeconds: 300,
+      otp: CUSTOMER_OTP_DELIVERY === "display" ? otp : undefined
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/customer/verify-otp" && req.method === "POST") {
+    const body = await readBody(req);
+    const phone = normalizePhone(body.phone);
+    const otp = String(body.otp || "").trim();
+    const pending = customerOtps.get(phone);
+    if (!phone || !otp) return sendError(res, 400, "Mobile number and OTP are required.");
+    if (!pending || pending.expiresAt < Date.now()) return sendError(res, 400, "OTP expired. Please request a new OTP.");
+    pending.attempts += 1;
+    if (pending.attempts > 5) {
+      customerOtps.delete(phone);
+      return sendError(res, 400, "Too many OTP attempts. Please request a new OTP.");
+    }
+    if (pending.otp !== otp) return sendError(res, 400, "Incorrect OTP. Please check and try again.");
+
+    const existing = customers.find((customer) => customer.phone === phone);
+    const now = new Date().toISOString();
+    const profile = existing || {
+      id: makeId("customer"),
+      phone,
+      createdAt: now
+    };
+    profile.name = String(body.name || pending.name || profile.name || "").trim();
+    profile.lastLoginAt = now;
+    if (!existing) customers.unshift(profile);
+    await writeJson(CUSTOMERS_FILE, customers);
+    customerOtps.delete(phone);
+
+    res.writeHead(200, {
+      "Content-Type": "application/json; charset=utf-8",
+      "Set-Cookie": `${CUSTOMER_SESSION}=${customerSessionValue(phone)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000`
+    });
+    res.end(JSON.stringify({ ok: true, customer: profile }));
+    return;
+  }
+
+  if (url.pathname === "/api/customer/me" && req.method === "GET") {
+    const session = readCustomerSession(req);
+    const customer = session ? customers.find((item) => item.phone === session.phone) : null;
+    sendJson(res, 200, { loggedIn: Boolean(customer), customer: customer || null });
+    return;
+  }
+
+  if (url.pathname === "/api/customer/logout" && req.method === "POST") {
+    res.writeHead(200, {
+      "Content-Type": "application/json; charset=utf-8",
+      "Set-Cookie": `${CUSTOMER_SESSION}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0`
+    });
+    res.end(JSON.stringify({ ok: true }));
+    return;
+  }
+
+  if (url.pathname === "/api/customer/orders" && req.method === "GET") {
+    const session = readCustomerSession(req);
+    if (!session?.phone) return sendError(res, 401, "Please login with your mobile number.");
+    const customerOrders = orders
+      .filter((order) => normalizePhone(order.customer?.phone) === session.phone)
+      .map(customerSafeOrder);
+    sendJson(res, 200, customerOrders);
     return;
   }
 

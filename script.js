@@ -121,6 +121,7 @@ const PREPAID_DISCOUNT_RATE = 0.1;
 const grid = document.querySelector("[data-product-grid]");
 const cartDrawer = document.querySelector("[data-cart-drawer]");
 const wishlistDrawer = document.querySelector("[data-wishlist-drawer]");
+const accountDrawer = document.querySelector("[data-account-drawer]");
 const overlay = document.querySelector("[data-overlay]");
 const toast = document.querySelector("[data-toast]");
 const quickView = document.querySelector("[data-quick-view]");
@@ -130,10 +131,16 @@ const detailContent = document.querySelector("[data-detail-content]");
 const checkoutModal = document.querySelector("[data-checkout-modal]");
 const orderSuccess = document.querySelector("[data-order-success]");
 const searchModal = document.querySelector("[data-search-modal]");
+const customerAuthModal = document.querySelector("[data-customer-auth-modal]");
 const searchInput = document.querySelector("[data-search-input]");
 const searchResults = document.querySelector("[data-search-results]");
 const paymentNote = document.querySelector("[data-payment-note]");
 const submitOrder = document.querySelector("[data-submit-order]");
+const customerState = {
+  customer: null,
+  pendingPhone: "",
+  pendingName: ""
+};
 
 async function supabaseRequest(path, options = {}) {
   const baseUrl = String(liveConfig.supabaseUrl || "").replace(/\/$/, "");
@@ -162,6 +169,23 @@ async function loadLiveProducts() {
   return rows
     .map((row) => row.payload || row)
     .filter((product) => product && product.id && product.name);
+}
+
+async function accountRequest(path, options = {}) {
+  const response = await fetch(`${apiBase}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {})
+    }
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.error || "Request failed. Please try again.");
+  return body;
+}
+
+function formatPhoneForInput(phone) {
+  return String(phone || "").replace(/^\+91/, "");
 }
 
 function visibleProducts() {
@@ -329,6 +353,71 @@ function renderWishlist() {
   `).join("");
 }
 
+function renderCustomer() {
+  const label = document.querySelector("[data-account-label]");
+  const title = document.querySelector("[data-customer-title]");
+  const profile = document.querySelector("[data-account-profile]");
+  const logout = document.querySelector("[data-customer-logout]");
+  const refresh = document.querySelector("[data-refresh-orders]");
+  const customer = customerState.customer;
+
+  if (label) label.textContent = customer ? "My Orders" : "Login";
+  if (title) title.textContent = customer ? "Order updates" : "Login for order updates";
+  if (logout) logout.hidden = !customer;
+  if (refresh) refresh.hidden = !customer;
+
+  if (!profile) return;
+  profile.innerHTML = customer
+    ? `<strong>${customer.name || "Vastravathi customer"}</strong><span>${customer.phone}</span><p>We will show order updates linked to this mobile number.</p>`
+    : '<p class="empty-state">Login with your mobile number to see your order updates.</p>';
+}
+
+function renderCustomerOrders(orders = []) {
+  const container = document.querySelector("[data-account-orders]");
+  if (!container) return;
+  if (!customerState.customer) {
+    container.innerHTML = "";
+    return;
+  }
+  if (!orders.length) {
+    container.innerHTML = '<p class="empty-state">No orders found for this mobile number yet.</p>';
+    return;
+  }
+  container.innerHTML = orders.map((order) => {
+    const item = order.items?.[0] || {};
+    return `
+      <article class="account-order">
+        <img src="${item.image || "vastravathi-logo.svg"}" alt="" />
+        <div>
+          <strong>${item.name || "Vastravathi order"}</strong>
+          <p>${order.status || "Preparing"} • ${order.shipmentStatus || "Order received"}</p>
+          <span>${order.paymentMode} • ${rupees.format(order.total || 0)}</span>
+          <span>${order.id}</span>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+async function loadCustomer() {
+  if (!apiEnabled) return;
+  try {
+    const result = await accountRequest("/api/customer/me");
+    customerState.customer = result.customer || null;
+    renderCustomer();
+    if (customerState.customer) await loadCustomerOrders();
+  } catch {
+    customerState.customer = null;
+    renderCustomer();
+  }
+}
+
+async function loadCustomerOrders() {
+  if (!apiEnabled || !customerState.customer) return;
+  const orders = await accountRequest("/api/customer/orders");
+  renderCustomerOrders(orders);
+}
+
 function addToCart(id) {
   const product = products.find((item) => item.id === id);
   if (!product) return;
@@ -390,7 +479,7 @@ function openPanel(panel) {
 }
 
 function closePanels() {
-  [cartDrawer, wishlistDrawer].forEach((panel) => {
+  [cartDrawer, wishlistDrawer, accountDrawer].forEach((panel) => {
     panel.classList.remove("active");
     panel.setAttribute("aria-hidden", "true");
   });
@@ -540,6 +629,11 @@ function openCheckout() {
   closePanels();
   renderCheckout();
   syncPaymentUi();
+  if (customerState.customer) {
+    const form = document.querySelector("[data-checkout-form]");
+    if (form.elements.phone && !form.elements.phone.value) form.elements.phone.value = formatPhoneForInput(customerState.customer.phone);
+    if (form.elements.name && !form.elements.name.value) form.elements.name.value = customerState.customer.name || "";
+  }
   checkoutModal.showModal();
 }
 
@@ -747,6 +841,26 @@ document.addEventListener("click", (event) => {
 
   if (event.target.closest("[data-open-cart]")) openPanel(cartDrawer);
   if (event.target.closest("[data-open-wishlist]")) openPanel(wishlistDrawer);
+  if (event.target.closest("[data-open-account]")) {
+    if (customerState.customer) {
+      openPanel(accountDrawer);
+      loadCustomerOrders().catch((error) => showToast(error.message));
+    } else {
+      customerAuthModal.showModal();
+    }
+  }
+  if (event.target.closest("[data-open-login]")) customerAuthModal.showModal();
+  if (event.target.closest("[data-refresh-orders]")) loadCustomerOrders().catch((error) => showToast(error.message));
+  if (event.target.closest("[data-customer-logout]")) {
+    accountRequest("/api/customer/logout", { method: "POST", body: "{}" })
+      .finally(() => {
+        customerState.customer = null;
+        renderCustomer();
+        renderCustomerOrders();
+        closePanels();
+        showToast("Logged out");
+      });
+  }
   if (event.target.closest("[data-close-panels]") || event.target === overlay) closePanels();
   if (event.target.closest("[data-close-modal]")) quickView.close();
   if (event.target.closest("[data-close-detail]")) productDetail.close();
@@ -759,6 +873,7 @@ document.addEventListener("click", (event) => {
     setTimeout(() => searchInput.focus(), 80);
   }
   if (event.target.closest("[data-close-search]")) searchModal.close();
+  if (event.target.closest("[data-close-login]")) customerAuthModal.close();
   if (event.target.closest(".menu-toggle")) document.querySelector(".nav-links").classList.toggle("open");
 });
 
@@ -780,6 +895,57 @@ searchInput.addEventListener("input", (event) => renderSearch(event.target.value
 
 document.querySelector("[data-checkout-form]").addEventListener("change", (event) => {
   if (event.target.name === "payment") syncPaymentUi();
+});
+
+document.querySelector("[data-otp-request-form]").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!apiEnabled) {
+    showToast("Mobile login works after opening the live site.");
+    return;
+  }
+  const form = event.currentTarget;
+  const data = Object.fromEntries(new FormData(form).entries());
+  try {
+    const result = await accountRequest("/api/customer/request-otp", {
+      method: "POST",
+      body: JSON.stringify(data)
+    });
+    customerState.pendingPhone = result.phone;
+    customerState.pendingName = String(data.name || "").trim();
+    document.querySelector("[data-otp-verify-form]").hidden = false;
+    const note = document.querySelector("[data-otp-note]");
+    note.textContent = result.otp
+      ? `Testing OTP: ${result.otp}. Use this to login now.`
+      : "OTP sent to your mobile number.";
+    document.querySelector("[data-otp-verify-form] input[name='otp']").focus();
+    showToast("OTP sent");
+  } catch (error) {
+    showToast(error.message);
+  }
+});
+
+document.querySelector("[data-otp-verify-form]").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const data = Object.fromEntries(new FormData(form).entries());
+  try {
+    const result = await accountRequest("/api/customer/verify-otp", {
+      method: "POST",
+      body: JSON.stringify({
+        phone: customerState.pendingPhone,
+        name: customerState.pendingName,
+        otp: data.otp
+      })
+    });
+    customerState.customer = result.customer;
+    renderCustomer();
+    await loadCustomerOrders();
+    customerAuthModal.close();
+    openPanel(accountDrawer);
+    showToast("Logged in");
+  } catch (error) {
+    showToast(error.message);
+  }
 });
 
 document.querySelector("[data-checkout-form]").addEventListener("submit", async (event) => {
@@ -840,6 +1006,9 @@ document.querySelector("[data-checkout-form]").addEventListener("submit", async 
     syncPaymentUi();
     showOrderSuccess(savedOrder);
     showToast(savedOrder.payment?.mode === "prepaid" ? "Order confirmed" : "COD order placed");
+    if (customerState.customer) {
+      loadCustomerOrders().catch(() => {});
+    }
   } catch (error) {
     if (paymentMode === "prepaid" && !checkoutModal.open) checkoutModal.showModal();
     showToast(customerErrorMessage(error, paymentMode));
@@ -882,6 +1051,8 @@ async function initStorefront() {
   renderProducts();
   renderCart();
   renderWishlist();
+  renderCustomer();
+  await loadCustomer();
 }
 
 initStorefront();

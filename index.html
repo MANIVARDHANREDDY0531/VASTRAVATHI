@@ -53,6 +53,10 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h15l-1.5 9h-12z"></path><path d="M6 6 5 3H2"></path><circle cx="9" cy="20" r="1.5"></circle><circle cx="18" cy="20" r="1.5"></circle></svg>
           <span>Cart</span>
         </button>
+        <button class="account-button" type="button" data-open-account>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>
+          <span data-account-label>Login</span>
+        </button>
       </div>
     </nav>
   </header>
@@ -260,6 +264,29 @@
     </div>
   </aside>
 
+  <aside class="drawer account-drawer" data-account-drawer aria-hidden="true">
+    <div class="drawer-header">
+      <div>
+        <span>My account</span>
+        <strong data-customer-title>Login for order updates</strong>
+      </div>
+      <button class="icon-btn" type="button" data-close-panels aria-label="Close account">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    <div class="drawer-body account-body">
+      <div class="account-profile" data-account-profile>
+        <p class="empty-state">Login with your mobile number to see your order updates.</p>
+      </div>
+      <div class="account-orders" data-account-orders></div>
+    </div>
+    <div class="drawer-footer account-actions">
+      <button class="secondary-detail-btn full" type="button" data-open-login>Login / Sign up</button>
+      <button class="primary-btn full" type="button" data-refresh-orders>Refresh order updates</button>
+      <button class="secondary-detail-btn full" type="button" data-customer-logout>Logout</button>
+    </div>
+  </aside>
+
   <dialog class="quick-view" data-quick-view>
     <button class="icon-btn close-modal" type="button" data-close-modal aria-label="Close quick view">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg>
@@ -334,6 +361,27 @@
       <p class="eyebrow">Search Vastravathi</p>
       <input type="search" data-search-input placeholder="Try silk, wedding, cotton..." aria-label="Search products" />
       <div class="search-results" data-search-results></div>
+    </div>
+  </dialog>
+
+  <dialog class="customer-auth-modal" data-customer-auth-modal>
+    <button class="icon-btn close-modal" type="button" data-close-login aria-label="Close login">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+    </button>
+    <div class="customer-auth-card">
+      <p class="eyebrow">Mobile login</p>
+      <h2>Login for order updates</h2>
+      <p>Enter your mobile number. We will verify it with an OTP and show your Vastravathi orders.</p>
+      <form data-otp-request-form>
+        <label>Mobile number<input type="tel" name="phone" placeholder="10 digit mobile number" required /></label>
+        <label>Name <span>optional</span><input type="text" name="name" placeholder="Your name" /></label>
+        <button class="primary-btn full" type="submit">Send OTP</button>
+      </form>
+      <form class="otp-verify-form" data-otp-verify-form hidden>
+        <label>Enter OTP<input type="text" name="otp" inputmode="numeric" maxlength="6" placeholder="6 digit OTP" required /></label>
+        <p class="checkout-note" data-otp-note>OTP sent to your mobile number.</p>
+        <button class="primary-btn full" type="submit">Verify and Login</button>
+      </form>
     </div>
   </dialog>
 
