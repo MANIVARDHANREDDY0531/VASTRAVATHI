@@ -268,7 +268,7 @@
     <div class="drawer-header">
       <div>
         <span>My account</span>
-        <strong data-customer-title>Login for order updates</strong>
+        <strong data-customer-title>Login to your account</strong>
       </div>
       <button class="icon-btn" type="button" data-close-panels aria-label="Close account">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg>
@@ -276,13 +276,14 @@
     </div>
     <div class="drawer-body account-body">
       <div class="account-profile" data-account-profile>
-        <p class="empty-state">Login with your mobile number to see your order updates.</p>
+        <p class="empty-state">Login with your mobile number to see your order history.</p>
       </div>
       <div class="account-orders" data-account-orders></div>
     </div>
     <div class="drawer-footer account-actions">
-      <button class="secondary-detail-btn full" type="button" data-open-login>Login / Sign up</button>
-      <button class="primary-btn full" type="button" data-refresh-orders>Refresh order updates</button>
+      <button class="primary-btn full" type="button" data-open-login data-auth-start="login">Login</button>
+      <button class="secondary-detail-btn full" type="button" data-open-login data-auth-start="signup">Sign up</button>
+      <button class="primary-btn full" type="button" data-refresh-orders>Refresh order history</button>
       <button class="secondary-detail-btn full" type="button" data-customer-logout>Logout</button>
     </div>
   </aside>
@@ -370,17 +371,22 @@
     </button>
     <div class="customer-auth-card">
       <p class="eyebrow">Mobile login</p>
-      <h2>Login for order updates</h2>
-      <p>Enter your mobile number. We will verify it with an OTP and show your Vastravathi orders.</p>
+      <h2 data-auth-heading>Login to your account</h2>
+      <p data-auth-copy>Already ordered or signed up? Enter your mobile number to view your order history.</p>
+      <div class="auth-switch" aria-label="Choose login or sign up">
+        <button class="active" type="button" data-auth-tab="login">Login</button>
+        <button type="button" data-auth-tab="signup">Sign up</button>
+      </div>
       <form data-otp-request-form>
+        <input type="hidden" name="mode" value="login" data-auth-mode />
         <label>Mobile number<input type="tel" name="phone" placeholder="10 digit mobile number" required /></label>
-        <label>Name <span>optional</span><input type="text" name="name" placeholder="Your name" /></label>
+        <label data-name-field>Name <span>required for sign up</span><input type="text" name="name" placeholder="Your name" /></label>
         <button class="primary-btn full" type="submit">Send OTP</button>
       </form>
       <form class="otp-verify-form" data-otp-verify-form hidden>
         <label>Enter OTP<input type="text" name="otp" inputmode="numeric" maxlength="6" placeholder="6 digit OTP" required /></label>
         <p class="checkout-note" data-otp-note>OTP sent to your mobile number.</p>
-        <button class="primary-btn full" type="submit">Verify and Login</button>
+        <button class="primary-btn full" type="submit">Verify</button>
       </form>
     </div>
   </dialog>

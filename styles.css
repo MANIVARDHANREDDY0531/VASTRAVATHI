@@ -1442,6 +1442,32 @@ dialog::backdrop {
   line-height: 1.6;
 }
 
+.auth-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  border: 1px solid rgba(217, 164, 65, 0.3);
+  border-radius: 999px;
+  background: rgba(255, 250, 241, 0.78);
+  padding: 0.3rem;
+}
+
+.auth-switch button {
+  min-height: 2.7rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: 900 0.95rem/1 Inter, sans-serif;
+  cursor: pointer;
+}
+
+.auth-switch button.active {
+  background: linear-gradient(135deg, var(--rose), #2a050c);
+  color: #fffaf0;
+  box-shadow: 0 10px 24px rgba(58, 16, 23, 0.18);
+}
+
 .customer-auth-card form {
   display: grid;
   gap: 0.8rem;

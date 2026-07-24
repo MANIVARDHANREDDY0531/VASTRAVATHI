@@ -624,13 +624,19 @@ async function handleApi(req, res, url) {
   if (url.pathname === "/api/customer/request-otp" && req.method === "POST") {
     const body = await readBody(req);
     const phone = normalizePhone(body.phone);
+    const mode = body.mode === "signup" ? "signup" : "login";
+    const existing = customers.find((customer) => customer.phone === phone);
     if (!phone) return sendError(res, 400, "Enter a valid 10 digit mobile number.");
+    if (mode === "login" && !existing) return sendError(res, 404, "No account found. Please sign up first.");
+    if (mode === "signup" && existing) return sendError(res, 409, "Account already exists. Please login.");
+    if (mode === "signup" && !String(body.name || "").trim()) return sendError(res, 400, "Enter your name to sign up.");
     const otp = makeOtp();
     customerOtps.set(phone, {
       otp,
       expiresAt: Date.now() + 5 * 60 * 1000,
       attempts: 0,
-      name: String(body.name || "").trim()
+      name: String(body.name || "").trim(),
+      mode
     });
     console.info(`Vastravathi customer OTP for ${phone}: ${otp}`);
     sendJson(res, 200, {
@@ -657,6 +663,8 @@ async function handleApi(req, res, url) {
     if (pending.otp !== otp) return sendError(res, 400, "Incorrect OTP. Please check and try again.");
 
     const existing = customers.find((customer) => customer.phone === phone);
+    if (pending.mode === "login" && !existing) return sendError(res, 404, "No account found. Please sign up first.");
+    if (pending.mode === "signup" && existing) return sendError(res, 409, "Account already exists. Please login.");
     const now = new Date().toISOString();
     const profile = existing || {
       id: makeId("customer"),

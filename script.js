@@ -139,7 +139,8 @@ const submitOrder = document.querySelector("[data-submit-order]");
 const customerState = {
   customer: null,
   pendingPhone: "",
-  pendingName: ""
+  pendingName: "",
+  authMode: "login"
 };
 
 async function supabaseRequest(path, options = {}) {
@@ -362,14 +363,14 @@ function renderCustomer() {
   const customer = customerState.customer;
 
   if (label) label.textContent = customer ? "My Orders" : "Login";
-  if (title) title.textContent = customer ? "Order updates" : "Login for order updates";
+  if (title) title.textContent = customer ? "Order history" : "Login to your account";
   if (logout) logout.hidden = !customer;
   if (refresh) refresh.hidden = !customer;
 
   if (!profile) return;
   profile.innerHTML = customer
-    ? `<strong>${customer.name || "Vastravathi customer"}</strong><span>${customer.phone}</span><p>We will show order updates linked to this mobile number.</p>`
-    : '<p class="empty-state">Login with your mobile number to see your order updates.</p>';
+    ? `<strong>${customer.name || "Vastravathi customer"}</strong><span>${customer.phone}</span><p>Your order history is linked to this mobile number.</p>`
+    : '<p class="empty-state">Login with your mobile number to see your order history.</p>';
 }
 
 function renderCustomerOrders(orders = []) {
@@ -385,6 +386,12 @@ function renderCustomerOrders(orders = []) {
   }
   container.innerHTML = orders.map((order) => {
     const item = order.items?.[0] || {};
+    const itemCount = order.items?.reduce((sum, line) => sum + Number(line.qty || 1), 0) || 1;
+    const placedOn = order.createdAt ? new Date(order.createdAt).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    }) : "";
     return `
       <article class="account-order">
         <img src="${item.image || "vastravathi-logo.svg"}" alt="" />
@@ -392,11 +399,37 @@ function renderCustomerOrders(orders = []) {
           <strong>${item.name || "Vastravathi order"}</strong>
           <p>${order.status || "Preparing"} • ${order.shipmentStatus || "Order received"}</p>
           <span>${order.paymentMode} • ${rupees.format(order.total || 0)}</span>
+          <span>${itemCount} item${itemCount === 1 ? "" : "s"}${placedOn ? ` • ${placedOn}` : ""}</span>
           <span>${order.id}</span>
         </div>
       </article>
     `;
   }).join("");
+}
+
+function setAuthMode(mode = "login") {
+  customerState.authMode = mode === "signup" ? "signup" : "login";
+  const isSignup = customerState.authMode === "signup";
+  document.querySelectorAll("[data-auth-tab]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.authTab === customerState.authMode);
+  });
+  const heading = document.querySelector("[data-auth-heading]");
+  const copy = document.querySelector("[data-auth-copy]");
+  const modeInput = document.querySelector("[data-auth-mode]");
+  const nameField = document.querySelector("[data-name-field]");
+  const nameInput = nameField?.querySelector("input");
+  if (heading) heading.textContent = isSignup ? "Create your account" : "Login to your account";
+  if (copy) {
+    copy.textContent = isSignup
+      ? "New to Vastravathi? Sign up with your mobile number to save your account and view future orders."
+      : "Already ordered or signed up? Enter your mobile number to view your order history.";
+  }
+  if (modeInput) modeInput.value = customerState.authMode;
+  if (nameField) nameField.hidden = !isSignup;
+  if (nameInput) nameInput.required = isSignup;
+  document.querySelector("[data-otp-verify-form]").hidden = true;
+  const note = document.querySelector("[data-otp-note]");
+  if (note) note.textContent = "OTP sent to your mobile number.";
 }
 
 async function loadCustomer() {
@@ -846,10 +879,17 @@ document.addEventListener("click", (event) => {
       openPanel(accountDrawer);
       loadCustomerOrders().catch((error) => showToast(error.message));
     } else {
+      setAuthMode("login");
       customerAuthModal.showModal();
     }
   }
-  if (event.target.closest("[data-open-login]")) customerAuthModal.showModal();
+  const loginTrigger = event.target.closest("[data-open-login]");
+  if (loginTrigger) {
+    setAuthMode(loginTrigger.dataset.authStart || "login");
+    customerAuthModal.showModal();
+  }
+  const authTab = event.target.closest("[data-auth-tab]");
+  if (authTab) setAuthMode(authTab.dataset.authTab);
   if (event.target.closest("[data-refresh-orders]")) loadCustomerOrders().catch((error) => showToast(error.message));
   if (event.target.closest("[data-customer-logout]")) {
     accountRequest("/api/customer/logout", { method: "POST", body: "{}" })
@@ -905,6 +945,10 @@ document.querySelector("[data-otp-request-form]").addEventListener("submit", asy
   }
   const form = event.currentTarget;
   const data = Object.fromEntries(new FormData(form).entries());
+  if (data.mode === "signup" && !String(data.name || "").trim()) {
+    showToast("Enter your name to sign up");
+    return;
+  }
   try {
     const result = await accountRequest("/api/customer/request-otp", {
       method: "POST",
@@ -912,10 +956,11 @@ document.querySelector("[data-otp-request-form]").addEventListener("submit", asy
     });
     customerState.pendingPhone = result.phone;
     customerState.pendingName = String(data.name || "").trim();
+    customerState.authMode = data.mode === "signup" ? "signup" : "login";
     document.querySelector("[data-otp-verify-form]").hidden = false;
     const note = document.querySelector("[data-otp-note]");
     note.textContent = result.otp
-      ? `Testing OTP: ${result.otp}. Use this to login now.`
+      ? `Testing OTP: ${result.otp}. Use this to continue.`
       : "OTP sent to your mobile number.";
     document.querySelector("[data-otp-verify-form] input[name='otp']").focus();
     showToast("OTP sent");
@@ -942,7 +987,7 @@ document.querySelector("[data-otp-verify-form]").addEventListener("submit", asyn
     await loadCustomerOrders();
     customerAuthModal.close();
     openPanel(accountDrawer);
-    showToast("Logged in");
+    showToast(customerState.authMode === "signup" ? "Account created" : "Logged in");
   } catch (error) {
     showToast(error.message);
   }
