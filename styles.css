@@ -522,7 +522,7 @@ svg {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1px;
-  margin-top: 1.3rem;
+  margin-top: 0.9rem;
   overflow: hidden;
   border: 1px solid rgba(217, 164, 65, 0.34);
   border-radius: 8px;
@@ -531,7 +531,7 @@ svg {
 }
 
 .promise-strip div {
-  padding: 1.25rem;
+  padding: 1rem;
   background: rgba(255, 253, 248, 0.88);
 }
 
@@ -617,8 +617,8 @@ svg {
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  margin-top: clamp(3.5rem, 6vw, 5rem);
-  padding-block: clamp(4.5rem, 8vw, 7rem) 4rem;
+  margin-top: clamp(1rem, 2vw, 1.8rem);
+  padding-block: clamp(2.4rem, 5vw, 4.2rem) 4rem;
   border: 1px solid rgba(217, 164, 65, 0.28);
   border-radius: 8px;
   background:
@@ -1936,6 +1936,14 @@ dialog::backdrop {
   .product-grid,
   .review-grid {
     grid-template-columns: 1fr;
+  }
+
+  .promise-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .promise-strip div {
+    padding: 0.75rem;
   }
 
   .collection-tile {
