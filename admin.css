@@ -198,6 +198,14 @@
   font-weight: 900;
 }
 
+.shiprocket-meta {
+  border-left: 3px solid var(--rose);
+  background: rgba(152, 35, 66, 0.08);
+  padding: 0.55rem 0.7rem;
+  color: var(--ink);
+  font-weight: 800;
+}
+
 .admin-actions {
   display: flex;
   flex-wrap: wrap;

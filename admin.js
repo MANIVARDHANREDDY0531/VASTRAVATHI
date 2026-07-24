@@ -183,33 +183,6 @@ function renderOrders() {
 
   orderList.innerHTML = orders.map((order) => {
     const customer = order.customer || {};
-    return `
-      <article class="admin-item">
-        <img src="${order.items?.[0]?.image || "vastravathi-logo.svg"}" alt="" />
-        <div>
-          <h3>${order.id}</h3>
-          <p>${customer.name || "Customer"} · ${customer.phone || "No phone"} · ${customer.city || "No city"} ${customer.pin || ""}</p>
-          <span>${rupees.format(order.total || order.subtotal || 0)} · ${order.payment?.collector || "Shiprocket"} · ${order.payment?.status || "COD Pending"} · ${order.shipmentStatus || "Ready for Shiprocket"}</span>
-        </div>
-        <div class="admin-actions">
-          <select class="status-select" data-status="${order.id}">
-            ${["Pending", "Packed", "Shipped", "Delivered", "Cancelled"].map((status) => `<option value="${status}" ${order.status === status ? "selected" : ""}>${status}</option>`).join("")}
-          </select>
-          <button type="button" data-sync-shiprocket="${order.id}">Shiprocket Sync</button>
-        </div>
-      </article>
-    `;
-  }).join("");
-}
-
-function renderOrders() {
-  if (!orders.length) {
-    orderList.innerHTML = '<p class="empty-state">No orders yet. Place a test order from the website checkout.</p>';
-    return;
-  }
-
-  orderList.innerHTML = orders.map((order) => {
-    const customer = order.customer || {};
     const items = Array.isArray(order.items) ? order.items : [];
     const firstItem = items[0] || {};
     const paymentMode = order.payment?.mode === "prepaid" ? "Prepaid" : "COD";
@@ -221,6 +194,7 @@ function renderOrders() {
       order.shiprocket?.shipmentId ? `Shipment: ${order.shiprocket.shipmentId}` : "",
       order.shiprocket?.awb ? `AWB: ${order.shiprocket.awb}` : "",
       order.shiprocket?.courier ? `Courier: ${order.shiprocket.courier}` : "",
+      order.shiprocket?.message ? `Shiprocket message: ${order.shiprocket.message}` : "",
       order.shiprocket?.lastError ? `Shiprocket error: ${order.shiprocket.lastError}` : ""
     ].filter(Boolean).join(" · ");
 
@@ -236,6 +210,7 @@ function renderOrders() {
           <p>${address || "No address added"}</p>
           <p>${items.map((item) => `${item.name} x ${item.qty || 1}`).join(", ")}</p>
           <span>${rupees.format(order.total || order.subtotal || 0)} · ${order.payment?.collector || "Shiprocket"} · ${order.payment?.status || "COD Pending"} · ${order.shipmentStatus || "Ready for Shiprocket"}</span>
+          ${shiprocketMeta ? `<p class="shiprocket-meta">${shiprocketMeta}</p>` : ""}
         </div>
         <div class="admin-actions">
           <select class="status-select" data-status="${order.id}">
@@ -372,7 +347,8 @@ document.addEventListener("click", async (event) => {
       const result = await api(`/api/shiprocket/sync/${syncId}`, { method: "POST", body: "{}" });
       await loadAll();
       const order = result.order || result;
-      showToast(order.shiprocket?.awb ? `Shiprocket synced: ${order.shiprocket.awb}` : "Shiprocket order created");
+      const shiprocketLabel = order.shiprocket?.awb || order.shiprocket?.shipmentId || order.shiprocket?.externalOrderId;
+      showToast(shiprocketLabel ? `Shiprocket synced: ${shiprocketLabel}` : "Shiprocket order created");
     } catch (error) {
       await loadAll();
       showToast(error.message || "Shiprocket sync failed");

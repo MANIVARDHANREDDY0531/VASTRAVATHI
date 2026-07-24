@@ -343,7 +343,9 @@ function shiprocketRequest(path, payload, token = "") {
           resolvePromise(data);
           return;
         }
-        const message = data.message || data.error || data.errors?.join?.(", ") || "Shiprocket request failed";
+        const message = response.statusCode === 403
+          ? "Shiprocket access forbidden. Create a Shiprocket API User in Settings > API and use that API email/password in Railway, not your normal Shiprocket login."
+          : data.message || data.error || data.errors?.join?.(", ") || "Shiprocket request failed";
         const error = new Error(message);
         error.statusCode = response.statusCode;
         error.data = data;
@@ -440,11 +442,12 @@ async function syncOrderToShiprocket(order) {
   order.shiprocket.awb = response.awb_code || order.shiprocket.awb || null;
   order.shiprocket.courier = response.courier_name || order.shiprocket.courier || null;
   order.shiprocket.statusCode = response.status_code || order.shiprocket.statusCode || null;
+  order.shiprocket.message = response.message || response.status || order.shiprocket.message || null;
   order.shiprocket.syncedAt = new Date().toISOString();
   order.shiprocket.lastError = null;
   order.shipmentStatus = response.awb_code
     ? `Shiprocket synced - AWB ${response.awb_code}`
-    : `Shiprocket synced - ${response.status || "NEW"}`;
+    : `Shiprocket synced - ${response.status || response.message || "NEW"}`;
   return response;
 }
 
