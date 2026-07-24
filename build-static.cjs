@@ -58,6 +58,11 @@ async function main() {
   if (await exists(uploadsDir)) {
     await cp(uploadsDir, join(target, "uploads"), { recursive: true });
   }
+
+  const assetsDir = join(source, "assets");
+  if (await exists(assetsDir)) {
+    await cp(assetsDir, join(target, "assets"), { recursive: true });
+  }
 }
 
 main().catch((error) => {

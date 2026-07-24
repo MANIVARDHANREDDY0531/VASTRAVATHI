@@ -2143,7 +2143,10 @@ dialog::backdrop {
   border-radius: 8px;
   background: #241112;
   box-shadow: 0 24px 72px rgba(38, 8, 19, 0.22);
+  cursor: pointer;
   isolation: isolate;
+  transform: translateY(0);
+  transition: border-color 0.45s ease, box-shadow 0.45s ease, transform 0.45s ease;
 }
 
 .edit-card::before {
@@ -2170,6 +2173,14 @@ dialog::backdrop {
   animation: silkShine 0.95s ease;
 }
 
+.edit-card:hover,
+.edit-card:focus-visible {
+  border-color: rgba(246, 223, 154, 0.78);
+  box-shadow: 0 34px 86px rgba(38, 8, 19, 0.28);
+  transform: translateY(-8px);
+  outline: none;
+}
+
 @keyframes silkShine {
   to { transform: translateX(120%); }
 }
@@ -2184,6 +2195,20 @@ dialog::backdrop {
 .edit-card:hover img {
   transform: scale(1.09);
   filter: saturate(1.16) contrast(1.05);
+}
+
+.edit-card small {
+  position: absolute;
+  z-index: 3;
+  left: 1rem;
+  right: 1rem;
+  bottom: 3.35rem;
+  color: rgba(255, 244, 220, 0.74);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  text-shadow: 0 10px 28px rgba(0, 0, 0, 0.48);
 }
 
 .edit-card span {

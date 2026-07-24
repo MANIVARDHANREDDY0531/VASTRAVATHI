@@ -717,6 +717,7 @@ document.addEventListener("click", (event) => {
   const detailId = event.target.closest("[data-detail]")?.dataset.detail;
   const filter = event.target.closest("[data-filter]")?.dataset.filter;
   const shortcut = event.target.closest("[data-filter-shortcut]")?.dataset.filterShortcut;
+  const categoryJump = event.target.closest("[data-category-jump]")?.dataset.categoryJump;
 
   if (addId) addToCart(addId);
   if (buyNowId) buyNow(buyNowId);
@@ -725,13 +726,14 @@ document.addEventListener("click", (event) => {
   if (quickId) openQuickView(quickId);
   if (detailId) openProductDetail(detailId);
 
-  if (filter || shortcut) {
-    state.filter = filter || shortcut;
+  if (filter || shortcut || categoryJump) {
+    state.filter = filter || shortcut || categoryJump;
     document.querySelectorAll("[data-filter]").forEach((button) => {
       button.classList.toggle("active", button.dataset.filter === state.filter);
     });
     hydrateEditorialImages();
-  renderProducts();
+    renderProducts();
+    if (categoryJump) document.querySelector("#new")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   if (event.target.closest("[data-open-cart]")) openPanel(cartDrawer);
@@ -755,6 +757,14 @@ document.querySelector("[data-sort]").addEventListener("change", (event) => {
   state.sort = event.target.value;
   hydrateEditorialImages();
   renderProducts();
+});
+
+document.querySelectorAll("[data-category-jump]").forEach((card) => {
+  card.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    card.click();
+  });
 });
 
 searchInput.addEventListener("input", (event) => renderSearch(event.target.value));
