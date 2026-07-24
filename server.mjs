@@ -31,6 +31,9 @@ const ADMIN_SESSION = "vastravathi_admin";
 const CUSTOMER_SESSION = "vastravathi_customer";
 const CUSTOMER_SESSION_SECRET = process.env.CUSTOMER_SESSION_SECRET || process.env.RAZORPAY_KEY_SECRET || ADMIN_PASSWORD;
 const CUSTOMER_OTP_DELIVERY = process.env.CUSTOMER_OTP_DELIVERY || "display";
+const FAST2SMS_API_KEY = process.env.FAST2SMS_API_KEY || "";
+const FAST2SMS_TEMPLATE_ID = process.env.FAST2SMS_TEMPLATE_ID || "";
+const FAST2SMS_ROUTE = process.env.FAST2SMS_ROUTE || "otp";
 const PREPAID_DISCOUNT_RATE = 0.1;
 const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || "";
 const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || "";
@@ -325,6 +328,10 @@ function shiprocketReady() {
   return Boolean(SHIPROCKET_EMAIL && SHIPROCKET_PASSWORD && SHIPROCKET_PICKUP_LOCATION);
 }
 
+function smsOtpReady() {
+  return CUSTOMER_OTP_DELIVERY === "sms" && Boolean(FAST2SMS_API_KEY);
+}
+
 function verifyRazorpaySignature({ orderId, paymentId, signature }) {
   if (!orderId || !paymentId || !signature || !RAZORPAY_KEY_SECRET) return false;
   const expected = createHmac("sha256", RAZORPAY_KEY_SECRET)
@@ -417,6 +424,61 @@ function shiprocketRequest(path, payload, token = "") {
     request.write(body);
     request.end();
   });
+}
+
+function fast2SmsRequest(payload) {
+  return new Promise((resolvePromise, reject) => {
+    const body = new URLSearchParams(payload).toString();
+    const request = httpsRequest({
+      hostname: "www.fast2sms.com",
+      path: "/dev/bulkV2",
+      method: "POST",
+      headers: {
+        authorization: FAST2SMS_API_KEY,
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Content-Length": Buffer.byteLength(body)
+      }
+    }, (response) => {
+      const chunks = [];
+      response.on("data", (chunk) => chunks.push(chunk));
+      response.on("end", () => {
+        const responseText = Buffer.concat(chunks).toString("utf8");
+        let data = {};
+        try {
+          data = responseText ? JSON.parse(responseText) : {};
+        } catch {
+          data = { message: responseText };
+        }
+        if (response.statusCode >= 200 && response.statusCode < 300 && data.return !== false) {
+          resolvePromise(data);
+          return;
+        }
+        const error = new Error(data.message || "OTP SMS could not be sent.");
+        error.statusCode = response.statusCode;
+        error.data = data;
+        reject(error);
+      });
+    });
+    request.setTimeout(20000, () => {
+      request.destroy(new Error("OTP SMS is taking too long. Please try again."));
+    });
+    request.on("error", reject);
+    request.write(body);
+    request.end();
+  });
+}
+
+async function sendCustomerOtpSms(phone, otp) {
+  if (!smsOtpReady()) throw new Error("SMS OTP is not configured.");
+  const number = phone.replace(/^\+91/, "");
+  const payload = {
+    route: FAST2SMS_ROUTE,
+    variables_values: otp,
+    numbers: number,
+    flash: "0"
+  };
+  if (FAST2SMS_TEMPLATE_ID) payload.template_id = FAST2SMS_TEMPLATE_ID;
+  await fast2SmsRequest(payload);
 }
 
 async function getShiprocketToken() {
@@ -638,7 +700,16 @@ async function handleApi(req, res, url) {
       name: String(body.name || "").trim(),
       mode
     });
-    console.info(`Vastravathi customer OTP for ${phone}: ${otp}`);
+    try {
+      if (CUSTOMER_OTP_DELIVERY === "sms") {
+        await sendCustomerOtpSms(phone, otp);
+      } else {
+        console.info(`Vastravathi customer OTP for ${phone}: ${otp}`);
+      }
+    } catch (error) {
+      customerOtps.delete(phone);
+      return sendError(res, error.statusCode === 401 ? 401 : 500, error.message || "OTP SMS could not be sent.");
+    }
     sendJson(res, 200, {
       ok: true,
       phone,
