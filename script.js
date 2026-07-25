@@ -215,9 +215,11 @@ function mainImage(product) {
 }
 
 function hydrateEditorialImages() {
-  const imagePool = products
-    .flatMap((product) => productImages(product))
+  const primaryProductImages = products.map((product) => mainImage(product)).filter(Boolean);
+  const extraProductImages = products
+    .flatMap((product) => productImages(product).slice(1))
     .filter(Boolean);
+  const imagePool = [...primaryProductImages, ...extraProductImages];
 
   document.querySelectorAll("[data-editorial-image]").forEach((image, index) => {
     if (!imagePool.length) {

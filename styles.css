@@ -2587,10 +2587,10 @@ dialog::backdrop {
   border: 1px solid rgba(215, 168, 61, 0.32);
   border-radius: 8px;
   background:
-    radial-gradient(circle at 92% 12%, rgba(11, 102, 95, 0.12), transparent 22rem),
-    radial-gradient(circle at 18% 86%, rgba(159, 36, 74, 0.1), transparent 20rem),
-    linear-gradient(135deg, #fffdf8 0%, #fff5ed 56%, #f7eadc 100%);
-  box-shadow: 0 30px 90px rgba(41, 17, 18, 0.1);
+    radial-gradient(circle at 82% 10%, rgba(244, 217, 130, 0.18), transparent 20rem),
+    radial-gradient(circle at 12% 86%, rgba(159, 36, 74, 0.24), transparent 22rem),
+    linear-gradient(135deg, #0a201e 0%, #2a0713 48%, #f9ead8 48.2%, #fffbf5 100%);
+  box-shadow: 0 34px 110px rgba(13, 31, 29, 0.18);
   padding: clamp(2rem, 5vw, 4.8rem);
 }
 
@@ -2602,13 +2602,13 @@ dialog::backdrop {
 .hero::before {
   z-index: 0;
   background:
-    linear-gradient(118deg, transparent 0 58%, rgba(215, 168, 61, 0.16) 58% 58.4%, transparent 58.4%),
-    linear-gradient(24deg, transparent 0 66%, rgba(11, 102, 95, 0.08) 66% 100%);
+    linear-gradient(112deg, transparent 0 45%, rgba(244, 217, 130, 0.24) 45% 45.3%, transparent 45.3%),
+    linear-gradient(24deg, transparent 0 68%, rgba(11, 102, 95, 0.08) 68% 100%);
 }
 
 .luxury-thread {
   z-index: 0;
-  opacity: 0.34;
+  opacity: 0.46;
   mask-image: none;
 }
 
@@ -2616,42 +2616,48 @@ dialog::backdrop {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 560px;
+  max-width: 590px;
   margin: 0;
   color: var(--ink);
   text-shadow: none;
 }
 
 .hero .eyebrow {
-  color: var(--teal);
+  color: #f4d982;
 }
 
 .hero h1 {
   max-width: 100%;
-  color: var(--wine);
-  font-size: clamp(3.8rem, 8vw, 7.4rem);
-  line-height: 0.92;
+  color: #fff8ec;
+  font-size: clamp(3.35rem, 6.7vw, 6.7rem);
+  line-height: 0.94;
+  text-wrap: balance;
 }
 
 .hero p:not(.eyebrow) {
   max-width: 520px;
-  color: #5f524b;
+  color: rgba(255, 248, 236, 0.82);
   font-size: clamp(1rem, 1.4vw, 1.18rem);
   line-height: 1.75;
 }
 
 .hero-microstrip span {
-  border-color: rgba(11, 102, 95, 0.24);
-  background: rgba(255, 255, 255, 0.72);
-  color: #2e4f49;
-  box-shadow: 0 10px 26px rgba(41, 17, 18, 0.06);
+  border-color: rgba(244, 217, 130, 0.34);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff7e8;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12);
 }
 
 .hero .secondary-btn {
-  border-color: rgba(11, 102, 95, 0.28);
-  background: white;
-  color: var(--teal);
-  box-shadow: 0 18px 44px rgba(41, 17, 18, 0.08);
+  border-color: rgba(244, 217, 130, 0.42);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff8ec;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.12);
+}
+
+.hero .primary-btn,
+.hero .secondary-btn {
+  min-width: 180px;
 }
 
 .hero-saree-gallery {
@@ -2672,12 +2678,23 @@ dialog::backdrop {
   inset: auto;
   width: auto;
   height: auto;
-  border: 1px solid rgba(215, 168, 61, 0.38);
+  border: 1px solid rgba(244, 217, 130, 0.46);
   border-radius: 8px;
   background:
-    radial-gradient(circle at 50% 12%, rgba(244, 217, 130, 0.25), transparent 14rem),
-    linear-gradient(180deg, #fffaf2, #f0dfcb);
-  box-shadow: 0 24px 70px rgba(41, 17, 18, 0.16);
+    radial-gradient(circle at 50% 12%, rgba(244, 217, 130, 0.3), transparent 14rem),
+    linear-gradient(180deg, #fffaf2, #ead2b9);
+  box-shadow: 0 30px 90px rgba(13, 31, 29, 0.22);
+}
+
+.saree-panel::before {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(112deg, transparent 0 38%, rgba(255, 255, 255, 0.24) 48%, transparent 58%);
+  transform: translateX(-120%);
+  content: "";
+  animation: silkShine 4.6s ease-in-out infinite;
 }
 
 .saree-panel::after {
@@ -2723,6 +2740,9 @@ dialog::backdrop {
   .hero {
     grid-template-columns: 1fr;
     width: calc(100% - 2rem);
+    background:
+      radial-gradient(circle at 82% 12%, rgba(244, 217, 130, 0.18), transparent 18rem),
+      linear-gradient(160deg, #0a201e 0%, #2a0713 62%, #5a1a2c 100%);
     padding: 1.4rem;
   }
 
