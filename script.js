@@ -117,6 +117,16 @@ const rupees = new Intl.NumberFormat("en-IN", {
   maximumFractionDigits: 0
 });
 const PREPAID_DISCOUNT_RATE = 0.1;
+const CURATED_EDITORIAL_IMAGES = [
+  "https://images.unsplash.com/photo-1778148046511-27141f5f01ae?auto=format&fit=crop&w=2200&q=85",
+  "https://images.unsplash.com/photo-1756483560049-e7b2208f99a0?auto=format&fit=crop&w=2200&q=85",
+  "https://images.unsplash.com/photo-1692992193981-d3d92fabd9cb?auto=format&fit=crop&w=2200&q=85",
+  "https://images.unsplash.com/photo-1654764745365-f276bf7ba58a?auto=format&fit=crop&w=2200&q=85",
+  "https://images.unsplash.com/photo-1654764746164-66b1e3aa04b8?auto=format&fit=crop&w=2200&q=85",
+  "https://images.unsplash.com/photo-1717835806988-3739f9e55926?auto=format&fit=crop&w=2200&q=85",
+  "https://images.unsplash.com/photo-1717835735088-4c821959bdaa?auto=format&fit=crop&w=2200&q=85",
+  "https://images.unsplash.com/photo-1615573678157-69c7fce87d54?auto=format&fit=crop&w=2200&q=85"
+];
 
 const grid = document.querySelector("[data-product-grid]");
 const cartDrawer = document.querySelector("[data-cart-drawer]");
@@ -215,11 +225,7 @@ function mainImage(product) {
 }
 
 function hydrateEditorialImages() {
-  const primaryProductImages = products.map((product) => mainImage(product)).filter(Boolean);
-  const extraProductImages = products
-    .flatMap((product) => productImages(product).slice(1))
-    .filter(Boolean);
-  const imagePool = [...primaryProductImages, ...extraProductImages];
+  const imagePool = CURATED_EDITORIAL_IMAGES;
 
   document.querySelectorAll("[data-editorial-image]").forEach((image, index) => {
     if (!imagePool.length) {

@@ -2577,21 +2577,21 @@ dialog::backdrop {
 /* Fresh boutique welcome redesign */
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(420px, 1.08fr);
-  gap: clamp(1.4rem, 4vw, 4.5rem);
-  width: min(1240px, calc(100% - 2.6rem));
-  min-height: auto;
+  grid-template-columns: minmax(360px, 0.96fr) minmax(0, 1.04fr);
+  gap: clamp(1.8rem, 4vw, 5rem);
+  width: min(1320px, calc(100% - 2.4rem));
+  min-height: min(760px, calc(100svh - 8.5rem));
   align-items: center;
   margin: clamp(1rem, 2vw, 1.6rem) auto 0;
   overflow: hidden;
   border: 1px solid rgba(215, 168, 61, 0.32);
   border-radius: 8px;
   background:
-    radial-gradient(circle at 82% 10%, rgba(244, 217, 130, 0.18), transparent 20rem),
-    radial-gradient(circle at 12% 86%, rgba(159, 36, 74, 0.24), transparent 22rem),
-    linear-gradient(135deg, #0a201e 0%, #2a0713 48%, #f9ead8 48.2%, #fffbf5 100%);
-  box-shadow: 0 34px 110px rgba(13, 31, 29, 0.18);
-  padding: clamp(2rem, 5vw, 4.8rem);
+    radial-gradient(circle at 12% 16%, rgba(142, 45, 69, 0.16), transparent 18rem),
+    radial-gradient(circle at 82% 22%, rgba(219, 183, 91, 0.2), transparent 22rem),
+    linear-gradient(118deg, #fffaf2 0 58%, #f4eadb 58.15% 100%);
+  box-shadow: 0 34px 110px rgba(66, 29, 20, 0.14);
+  padding: clamp(1.25rem, 3.7vw, 3.8rem);
 }
 
 .hero-media,
@@ -2602,57 +2602,59 @@ dialog::backdrop {
 .hero::before {
   z-index: 0;
   background:
-    linear-gradient(112deg, transparent 0 45%, rgba(244, 217, 130, 0.24) 45% 45.3%, transparent 45.3%),
-    linear-gradient(24deg, transparent 0 68%, rgba(11, 102, 95, 0.08) 68% 100%);
+    linear-gradient(112deg, transparent 0 48%, rgba(132, 34, 54, 0.09) 48% 48.3%, transparent 48.3%),
+    linear-gradient(24deg, transparent 0 70%, rgba(15, 77, 70, 0.08) 70% 100%);
 }
 
 .luxury-thread {
   z-index: 0;
-  opacity: 0.46;
+  opacity: 0.34;
   mask-image: none;
 }
 
 .hero-content {
   position: relative;
   z-index: 1;
+  grid-column: 2;
+  grid-row: 1;
   width: 100%;
-  max-width: 590px;
+  max-width: 650px;
   margin: 0;
   color: var(--ink);
   text-shadow: none;
 }
 
 .hero .eyebrow {
-  color: #f4d982;
+  color: #0f4d46;
 }
 
 .hero h1 {
   max-width: 100%;
-  color: #fff8ec;
-  font-size: clamp(3.35rem, 6.7vw, 6.7rem);
-  line-height: 0.94;
+  color: #3c0718;
+  font-size: clamp(3.6rem, 7.2vw, 7.35rem);
+  line-height: 0.9;
   text-wrap: balance;
 }
 
 .hero p:not(.eyebrow) {
-  max-width: 520px;
-  color: rgba(255, 248, 236, 0.82);
+  max-width: 560px;
+  color: #5f554d;
   font-size: clamp(1rem, 1.4vw, 1.18rem);
   line-height: 1.75;
 }
 
 .hero-microstrip span {
-  border-color: rgba(244, 217, 130, 0.34);
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff7e8;
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12);
+  border-color: rgba(15, 77, 70, 0.18);
+  background: rgba(255, 255, 255, 0.72);
+  color: #244640;
+  box-shadow: 0 10px 26px rgba(66, 29, 20, 0.08);
 }
 
 .hero .secondary-btn {
-  border-color: rgba(244, 217, 130, 0.42);
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff8ec;
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.12);
+  border-color: rgba(15, 77, 70, 0.2);
+  background: rgba(255, 255, 255, 0.78);
+  color: #244640;
+  box-shadow: 0 18px 44px rgba(66, 29, 20, 0.1);
 }
 
 .hero .primary-btn,
@@ -2665,11 +2667,13 @@ dialog::backdrop {
   inset: auto;
   z-index: 1;
   display: grid;
-  grid-template-columns: 1.05fr 0.82fr;
+  grid-column: 1;
+  grid-row: 1;
+  grid-template-columns: 1.18fr 0.82fr;
   grid-template-rows: 1fr 1fr;
   gap: 0.8rem;
   width: 100%;
-  min-height: clamp(380px, 38vw, 560px);
+  min-height: clamp(480px, 46vw, 660px);
   pointer-events: none;
 }
 
@@ -2681,9 +2685,9 @@ dialog::backdrop {
   border: 1px solid rgba(244, 217, 130, 0.46);
   border-radius: 8px;
   background:
-    radial-gradient(circle at 50% 12%, rgba(244, 217, 130, 0.3), transparent 14rem),
-    linear-gradient(180deg, #fffaf2, #ead2b9);
-  box-shadow: 0 30px 90px rgba(13, 31, 29, 0.22);
+    radial-gradient(circle at 50% 12%, rgba(244, 217, 130, 0.22), transparent 14rem),
+    linear-gradient(180deg, #fffaf2, #e9d6bd);
+  box-shadow: 0 30px 90px rgba(66, 29, 20, 0.18);
 }
 
 .saree-panel::before {
@@ -2702,11 +2706,13 @@ dialog::backdrop {
 }
 
 .saree-panel img {
+  display: block;
+  width: 100%;
   height: 100%;
-  object-fit: contain;
-  object-position: center bottom;
-  padding: 0.55rem;
-  filter: saturate(1.08) contrast(1.02);
+  object-fit: cover;
+  object-position: center;
+  padding: 0;
+  filter: saturate(1.06) contrast(1.02);
 }
 
 .panel-one {
@@ -2741,17 +2747,23 @@ dialog::backdrop {
     grid-template-columns: 1fr;
     width: calc(100% - 2rem);
     background:
-      radial-gradient(circle at 82% 12%, rgba(244, 217, 130, 0.18), transparent 18rem),
-      linear-gradient(160deg, #0a201e 0%, #2a0713 62%, #5a1a2c 100%);
+      radial-gradient(circle at 22% 8%, rgba(142, 45, 69, 0.15), transparent 15rem),
+      linear-gradient(180deg, #fffaf2, #f4eadb);
     padding: 1.4rem;
   }
 
   .hero-content {
+    grid-column: 1;
+    grid-row: auto;
+    order: 1;
     max-width: none;
   }
 
   .hero-saree-gallery {
-    min-height: 520px;
+    grid-column: 1;
+    grid-row: auto;
+    order: 2;
+    min-height: 480px;
   }
 }
 
@@ -2762,7 +2774,7 @@ dialog::backdrop {
   }
 
   .hero h1 {
-    font-size: clamp(2.9rem, 15vw, 4rem);
+    font-size: clamp(2.75rem, 14vw, 4.1rem);
   }
 
   .hero p:not(.eyebrow) {
@@ -2777,6 +2789,6 @@ dialog::backdrop {
   }
 
   .saree-panel img {
-    padding: 0.35rem;
+    padding: 0;
   }
 }
