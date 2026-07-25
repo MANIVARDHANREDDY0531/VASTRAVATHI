@@ -665,13 +665,18 @@ svg {
   overflow: hidden;
   isolation: isolate;
   margin-top: clamp(1rem, 2vw, 1.8rem);
-  padding-block: clamp(2.4rem, 5vw, 4.2rem) 4rem;
+  padding-block: clamp(1.8rem, 4vw, 3rem) 4rem;
   border: 1px solid rgba(217, 164, 65, 0.28);
   border-radius: 8px;
   background:
     linear-gradient(135deg, rgba(255, 248, 238, 0.9), rgba(255, 241, 222, 0.8)),
     linear-gradient(90deg, rgba(38, 8, 19, 0.1), rgba(217, 164, 65, 0.08));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 30px 90px rgba(38, 8, 19, 0.1);
+}
+
+.products-section .product-controls {
+  position: relative;
+  z-index: 1;
 }
 
 .products-section::before {
@@ -722,7 +727,7 @@ svg {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1.3rem;
+  margin-bottom: 1.35rem;
 }
 
 .filter-tabs {
@@ -810,19 +815,23 @@ svg {
 
 .product-image {
   position: relative;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 3 / 4.35;
   overflow: hidden;
-  background: var(--soft);
+  background:
+    radial-gradient(circle at 50% 18%, rgba(244, 217, 130, 0.24), transparent 13rem),
+    linear-gradient(180deg, #fffaf2, #f3e4d1);
 }
 
 .product-image img {
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center bottom;
+  padding: 0.35rem;
   transition: transform 0.55s ease;
 }
 
 .product-card:hover .product-image img {
-  transform: scale(1.07);
+  transform: scale(1.025);
 }
 
 .product-card.sold-out .product-image img {
@@ -1250,7 +1259,10 @@ dialog::backdrop {
   height: 100%;
   min-height: 420px;
   border-radius: 8px;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center bottom;
+  background: linear-gradient(180deg, #fffaf2, #f3e4d1);
+  padding: 0.45rem;
 }
 
 .quick-copy {
@@ -1399,7 +1411,10 @@ dialog::backdrop {
   aspect-ratio: 4 / 5;
   border: 1px solid rgba(217, 164, 65, 0.34);
   border-radius: 8px;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center bottom;
+  background: linear-gradient(180deg, #fffaf2, #f3e4d1);
+  padding: 0.45rem;
   box-shadow: 0 24px 70px rgba(38, 8, 19, 0.14);
 }
 
